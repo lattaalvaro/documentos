@@ -104,8 +104,6 @@ def index():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    if 'user' not in session:
-        return redirect(url_for('login'))
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
