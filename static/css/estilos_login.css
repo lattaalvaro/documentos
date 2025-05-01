@@ -1,0 +1,166 @@
+﻿/* Fondo general */
+body {
+    background: url('/static/camuflaje.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Contenedor principal */
+.login-container {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.6);
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Logo y título */
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+    .logo-container img {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 10px;
+    }
+
+    .logo-container h1 {
+        color: #d4d4d4;
+        font-size: 28px;
+        margin: 0;
+        text-shadow: 2px 2px 6px black;
+    }
+
+/* Inputs con icono */
+.input-group {
+    position: relative;
+    margin: 20px 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+    .input-group input {
+        width: 100%;
+        padding: 14px 14px 14px 45px; /* espacio a la izquierda para el icono */
+        border: none;
+        border-radius: 12px;
+        font-size: 18px;
+        background-color: #f2f2f2;
+        box-sizing: border-box;
+    }
+
+    .input-group i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #555;
+        font-size: 20px;
+    }
+
+/* Botón */
+.login-container button {
+    width: 100%;
+    padding: 15px;
+    background-color: #556b2f;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 20px;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+    /* Efecto hover */
+    .login-container button:hover {
+        background-color: #6b8e23;
+        transform: scale(1.05);
+    }
+
+/* Texto pequeño */
+.login-container p {
+    color: #ccc;
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+.login-container a {
+    color: #9acd32;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Media Queries - Responsive para móvil */
+@media (max-width: 768px) {
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+    }
+
+    .login-container {
+        width: 95vw;
+        padding: 40px 30px;
+        margin: 20px auto;
+        height: auto; /* para que crezca según contenido */
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .logo-container img {
+        width: 100px;
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    .logo-container h1 {
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 18px 18px 18px 50px;
+        font-size: 20px;
+        border-radius: 10px;
+    }
+
+    .input-group i {
+        font-size: 22px;
+    }
+
+    .login-container button {
+        width: 100%;
+        padding: 18px;
+        font-size: 22px;
+        border-radius: 10px;
+        margin-top: 20px;
+        background-color: #004225;
+        color: white;
+        border: none;
+    }
+
+        .login-container button:hover {
+            background-color: #006633;
+        }
+}

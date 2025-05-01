@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro Militar de Documentos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Militar" class="logo">
+        <h1>CENTRO MILITAR<br>DE DOCUMENTOS</h1>
+    </header>
+
+    <div class="upload-search-container">
+        <form class="upload-form" action="{{ url_for('index') }}" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" id="fileInput" onchange="this.form.submit()">
+            <label for="fileInput" class="upload-btn">Subir Documento</label>
+        </form>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" onkeyup="searchDocuments()" placeholder="Buscar...">
+            </div>
+        </div>
+    </div>
+
+    <section class="recent-docs">
+        <h2>DOCUMENTOS RECIENTES</h2>
+        <div class="doc-list">
+            {% for doc in docs %}
+            <div class="doc-card">
+                <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
+                <h3>{{ doc.title }}</h3>
+                <p>{{ doc.description }}</p>
+
+                {% set ext = doc.filename.rsplit('.', 1)[1].lower() %}
+                {% if ext == 'pdf' %}
+                <a href="#" onclick="openPDFModal('{{ url_for('uploaded_file', filename=doc.filename) }}'); return false;">Ver documento</a>
+                {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
+                <a href="#" onclick="openGoogleViewer('{{ url_for('uploaded_file', filename=doc.filename) }}'); return false;">Ver documento</a>
+                {% endif %}
+
+                {% if doc.downloadable %}
+                <a href="{{ url_for('uploaded_file', filename=doc.filename) }}" download class="btn btn-primary">Descargar original</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Modal PDF.js -->
+    <div class="modal" id="pdfModal">
+        <div id="pdfModalContent">
+            <div class="pdf-controls-top">
+                <button onclick="navigatePDF(-1)">Anterior</button>
+                <button onclick="navigatePDF(1)">Siguiente</button>
+            </div>
+            <span class="close-btn" onclick="closePDFModal()">&times;</span>
+            <div id="pdfViewerContainer">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Google Docs -->
+    <div class="modal" id="googleModal">
+        <span class="close-btn" onclick="closeGoogleModal()">&times;</span>
+        <iframe id="googleViewerFrame" width="100%" height="600px" frameborder="0"></iframe>
+    </div>
+
+    <script>
+        let pdfDoc = null;
+        let currentPage = 1;
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function openPDFModal(url) {
+            document.getElementById('pdfModal').style.display = 'block';
+            pdfjsLib.getDocument(url).promise.then(function (pdf) {
+                pdfDoc = pdf;
+                currentPage = 1;
+                renderPage(currentPage);
+            });
+        }
+
+        function renderPage(pageNumber) {
+            pdfDoc.getPage(pageNumber).then(function (page) {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+            });
+        }
+
+        function navigatePDF(offset) {
+            const newPage = currentPage + offset;
+            if (newPage > 0 && newPage <= pdfDoc.numPages) {
+                currentPage = newPage;
+                renderPage(currentPage);
+            }
+        }
+
+        function closePDFModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+        }
+
+        function openGoogleViewer(fileUrl) {
+            const absoluteUrl = window.location.origin + fileUrl;
+            const googleUrl = `https://docs.google.com/gview?url=${absoluteUrl}&embedded=true`;
+            document.getElementById('googleViewerFrame').src = googleUrl;
+            document.getElementById('googleModal').style.display = 'block';
+        }
+
+        function closeGoogleModal() {
+            document.getElementById('googleModal').style.display = 'none';
+            document.getElementById('googleViewerFrame').src = '';
+        }
+
+        function searchDocuments() {
+            var input, filter, docCards, docTitles, i, txtValue;
+            input = document.getElementById('searchInput');
+            filter = input.value.toUpperCase();
+            docCards = document.getElementsByClassName('doc-card');
+
+            for (i = 0; i < docCards.length; i++) {
+                docTitles = docCards[i].getElementsByTagName('h3');
+                if (docTitles.length > 0) {
+                    txtValue = docTitles[0].textContent || docTitles[0].innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        docCards[i].style.display = "";
+                    } else {
+                        docCards[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
