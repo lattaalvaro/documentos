@@ -182,13 +182,18 @@ def upload():
 from flask import Flask, render_template, redirect, url_for, session, jsonify
 from boxsdk import OAuth2, Client
 
+from flask import Flask, render_template, redirect, url_for, session, jsonify, request
+from boxsdk import OAuth2, Client
+
 @app.route('/view_file/<file_id>')
 def view_file(file_id):
     if 'box_access_token' not in session:
+        # Si es una petición desde iframe o visor, devuelve 403 para que no intente mostrar el HTML del login
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({'error': 'No autorizado'}), 403
         return redirect(url_for('login'))
 
     try:
-        # Autenticación con Box
         oauth = OAuth2(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
@@ -200,19 +205,15 @@ def view_file(file_id):
             })
         )
         client = Client(oauth)
-
-        # Obtener archivo y enlace compartido
         file = client.file(file_id).get()
-        ext = file.name.rsplit('.', 1)[-1].lower()
         shared_link = file.get_shared_link(access='open')
         file_url = shared_link['download_url']
 
-        # Devolver el archivo directamente como URL pública
         return redirect(file_url)
 
     except Exception as e:
-        print("Error al abrir archivo:", e)
-        return redirect(url_for('index'))
+        print("Error al obtener el archivo:", e)
+        return "Error al mostrar el documento", 500
         
 @app.route('/callback')
 def callback():
