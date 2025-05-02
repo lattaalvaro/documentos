@@ -14,13 +14,11 @@
     </header>
 
     <div class="upload-search-container">
-        <!-- Formulario para subir documentos -->
         <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" id="fileInput" onchange="this.form.submit()">
             <label for="fileInput" class="upload-btn">Subir Documento</label>
         </form>
 
-        <!-- Barra de búsqueda de documentos -->
         <div class="search-container">
             <div class="search-box">
                 <input type="text" id="searchInput" onkeyup="searchDocuments()" placeholder="Buscar...">
@@ -50,7 +48,6 @@
         </div>
     </section>
 
-    <!-- Modal PDF.js -->
     <div class="modal" id="pdfModal">
         <div id="pdfModalContent">
             <div class="pdf-controls-top">
@@ -64,7 +61,6 @@
         </div>
     </div>
 
-    <!-- Modal Google Docs -->
     <div class="modal" id="googleModal">
         <span class="close-btn" onclick="closeGoogleModal()">&times;</span>
         <iframe id="googleViewerFrame" width="100%" height="600px" frameborder="0"></iframe>
@@ -97,19 +93,18 @@
                 const viewport = page.getViewport({ scale: 1.5 });
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
-
-                const renderContext = {
+                page.render({
                     canvasContext: ctx,
                     viewport: viewport
-                };
-                page.render(renderContext);
+                });
             });
         }
 
-        function navigatePDF(offset) {
-            const newPage = currentPage + offset;
-            if (newPage > 0 && newPage <= pdfDoc.numPages) {
-                currentPage = newPage;
+        function navigatePDF(step) {
+            if (pdfDoc) {
+                currentPage += step;
+                if (currentPage < 1) currentPage = 1;
+                if (currentPage > pdfDoc.numPages) currentPage = pdfDoc.numPages;
                 renderPage(currentPage);
             }
         }
@@ -118,43 +113,31 @@
             document.getElementById('pdfModal').style.display = 'none';
         }
 
-        function openGoogleViewer(fileUrl) {
-            const absoluteUrl = window.location.origin + fileUrl;
-            fetch(fileUrl)
-                .then(response => {
-                    if (response.ok) {
-                        const googleUrl = `https://docs.google.com/gview?url=${absoluteUrl}&embedded=true`;
-                        document.getElementById('googleViewerFrame').src = googleUrl;
-                        document.getElementById('googleModal').style.display = 'block';
-                    } else {
-                        alert("No autorizado o no se puede cargar el documento.");
-                    }
-                });
+        function openGoogleViewer(url) {
+            document.getElementById('googleModal').style.display = 'block';
+            const viewerUrl = `https://docs.google.com/viewer?url=${url}`;
+            document.getElementById('googleViewerFrame').src = viewerUrl;
         }
 
         function closeGoogleModal() {
             document.getElementById('googleModal').style.display = 'none';
+            document.getElementById('googleViewerFrame').src = "";
         }
 
         function searchDocuments() {
-            var input, filter, docCards, docTitles, i, txtValue;
-            input = document.getElementById('searchInput');
-            filter = input.value.toUpperCase();
-            docCards = document.getElementsByClassName('doc-card');
-
-            for (i = 0; i < docCards.length; i++) {
-                docTitles = docCards[i].getElementsByTagName('h3');
-                if (docTitles.length > 0) {
-                    txtValue = docTitles[0].textContent || docTitles[0].innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        docCards[i].style.display = "";
-                    } else {
-                        docCards[i].style.display = "none";
-                    }
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const docCards = document.querySelectorAll(".doc-card");
+            docCards.forEach(card => {
+                const title = card.querySelector("h3").textContent.toLowerCase();
+                if (title.includes(query)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
                 }
-            }
+            });
         }
     </script>
 </body>
 </html>
+
 
