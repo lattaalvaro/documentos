@@ -179,43 +179,49 @@ def upload():
 
     return redirect(url_for('index'))
 
+import os
+import requests
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from boxsdk import OAuth2, Client
+
+app = Flask(__name__)
+app.secret_key = 'tu_clave_secreta'
+
+# Config Box
+BOX_CLIENT_ID = os.environ.get('BOX_CLIENT_ID')
+BOX_CLIENT_SECRET = os.environ.get('BOX_CLIENT_SECRET')
+BOX_DEVELOPER_TOKEN = os.environ.get('BOX_DEVELOPER_TOKEN')
+
+oauth = OAuth2(
+    client_id=BOX_CLIENT_ID,
+    client_secret=BOX_CLIENT_SECRET,
+    access_token=BOX_DEVELOPER_TOKEN
+)
+box_client = Client(oauth)
+
+@app.route('/')
+def index():
+    items = box_client.folder('0').get_items()
+    archivos = []
+    for item in items:
+        if item.type == 'file':
+            archivos.append({
+                'file_id': item.id,
+                'title': item.name,
+                'description': f'Documento cargado: {item.name}'
+            })
+    session['box_access_token'] = BOX_DEVELOPER_TOKEN
+    return render_template('index.html', box_files=archivos)
+
 @app.route('/view_file/<file_id>')
 def view_file(file_id):
-    if 'box_access_token' not in session:
-        return redirect(url_for('login'))
-
     try:
-        oauth = OAuth2(
-            client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET,
-            access_token=session['box_access_token'],
-            refresh_token=session['box_refresh_token'],
-            store_tokens=lambda access, refresh: session.update({
-                'box_access_token': access,
-                'box_refresh_token': refresh
-            })
-        )
-        client = Client(oauth)
-        file = client.file(file_id).get()
-
-        # Obtener el enlace compartido
-        shared_link = file.get_shared_link(access='open')
-
-        # Convertir a enlace directo si es posible (solo funciona con archivos públicos y no todos los formatos)
-        # Para archivos PDF, esto usualmente funciona:
-        direct_url = shared_link.replace("https://app.box.com/s/", "https://box.com/shared/static/")
-
-        # Agregamos extensión si es necesaria (solo para PDF.js)
-        ext = file.name.rsplit('.', 1)[-1].lower()
-        if ext == "pdf":
-            direct_url += ".pdf"
-
-        # Redirigimos al index pasando la URL directa
-        return redirect(url_for('index', file_url=direct_url, ext=ext))
-
+        file = box_client.file(file_id).get()
+        shared_link = box_client.file(file_id).get_shared_link(access='open')
+        return jsonify({'file_url': shared_link})
     except Exception as e:
-        print("Error al obtener el archivo:", e)
-        return "Error al mostrar el documento", 500
+        print(f"Error al obtener el archivo: {e}")
+        return jsonify({'error': 'No se pudo obtener el enlace de descarga del archivo'}), 500
         
 @app.route('/callback')
 def callback():
