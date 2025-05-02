@@ -36,7 +36,6 @@ def save_user_firebase(email):
     response = requests.post(FIREBASE_URL[:-5] + '.json', json=user_data)
     return response.status_code == 200
 
-# Crear una carpeta en Box
 def create_box_folder(client, folder_name):
     try:
         folder = client.folder('0').create_subfolder(folder_name)
@@ -46,7 +45,6 @@ def create_box_folder(client, folder_name):
         print(f"Error creando la carpeta: {e}")
         return None
 
-# Verificar si la carpeta ya existe
 def get_or_create_box_folder(client, folder_name):
     try:
         items = client.folder('0').get_items()
@@ -128,15 +126,11 @@ def index():
                 items = folder.get_items()
                 for item in items:
                     if item.type == 'file':
-                        file = client.file(file_id=item.id).get()
-                        shared_link = file.get_shared_link(access='open')
-                        file_url = shared_link['download_url']
                         ext = item.name.rsplit('.', 1)[-1].lower()
-
                         box_files.append({
                             'title': item.name,
-                            'url': file_url,
-                            'extension': ext
+                            'extension': ext,
+                            'file_id': item.id
                         })
         except Exception as e:
             flash(f"Error accediendo a Box: {e}", 'error')
@@ -184,6 +178,42 @@ def upload():
                 flash(f'Error subiendo a Box: {e}', 'error')
 
     return redirect(url_for('index'))
+
+@app.route('/view_file/<file_id>')
+def view_file(file_id):
+    if 'box_access_token' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        oauth = OAuth2(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            access_token=session['box_access_token'],
+            refresh_token=session['box_refresh_token'],
+            store_tokens=lambda access, refresh: session.update({
+                'box_access_token': access,
+                'box_refresh_token': refresh
+            })
+        )
+        client = Client(oauth)
+        file = client.file(file_id).get()
+        ext = file.name.rsplit('.', 1)[-1].lower()
+        shared_link = file.get_shared_link(access='open')
+        file_url = shared_link['download_url']
+
+        if ext == 'pdf':
+            return render_template('view_pdf.html', file_url=file_url, title=file.name)
+        elif ext in ['doc', 'docx']:
+            return render_template('view_doc.html', file_url=file_url, title=file.name)
+        elif ext in ['xls', 'xlsx']:
+            return render_template('view_xls.html', file_url=file_url, title=file.name)
+        elif ext in ['ppt', 'pptx']:
+            return render_template('view_ppt.html', file_url=file_url, title=file.name)
+        else:
+            return redirect(file_url)
+
+    except Exception as e:
+        return f"Error al visualizar el archivo: {e}", 500
 
 @app.route('/callback')
 def callback():
