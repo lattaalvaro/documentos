@@ -39,7 +39,6 @@ def save_user_firebase(email):
 # Crear una carpeta en Box
 def create_box_folder(client, folder_name):
     try:
-        # Crear una carpeta en la raíz (root folder) de Box
         folder = client.folder('0').create_subfolder(folder_name)
         print(f"Carpeta '{folder_name}' creada en Box")
         return folder
@@ -50,14 +49,11 @@ def create_box_folder(client, folder_name):
 # Verificar si la carpeta ya existe
 def get_or_create_box_folder(client, folder_name):
     try:
-        # Buscar la carpeta por nombre
         items = client.folder('0').get_items()
         for item in items:
             if item.name == folder_name and item.type == 'folder':
                 print(f"Carpeta '{folder_name}' ya existe en Box")
-                return item  # Si la carpeta existe, la devolvemos
-
-        # Si la carpeta no existe, crearla
+                return item
         return create_box_folder(client, folder_name)
     except Exception as e:
         print(f"Error buscando o creando la carpeta: {e}")
@@ -114,32 +110,36 @@ def index():
 
     box_files = []
     if 'box_access_token' in session:
-        oauth = OAuth2(
-            client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET,
-            access_token=session['box_access_token'],
-            refresh_token=session['box_refresh_token'],
-        )
-        client = Client(oauth)
+        try:
+            oauth = OAuth2(
+                client_id=CLIENT_ID,
+                client_secret=CLIENT_SECRET,
+                access_token=session['box_access_token'],
+                refresh_token=session['box_refresh_token'],
+                store_tokens=lambda access, refresh: session.update({
+                    'box_access_token': access,
+                    'box_refresh_token': refresh
+                })
+            )
+            client = Client(oauth)
 
-        folder_name = "ArchivosSubidos"
-        folder = get_or_create_box_folder(client, folder_name)
+            folder = get_or_create_box_folder(client, "ArchivosSubidos")
+            if folder:
+                items = folder.get_items()
+                for item in items:
+                    if item.type == 'file':
+                        file = client.file(file_id=item.id).get()
+                        shared_link = file.get_shared_link(access='open')
+                        file_url = shared_link['download_url']
+                        ext = item.name.rsplit('.', 1)[-1].lower()
 
-        if folder:
-            items = folder.get_items()
-for item in items:
-    if item.type == 'file':
-        file = client.file(file_id=item.id).get()
-        shared_link = file.get_shared_link(access='open')
-        download_url = shared_link['download_url']
-        file_ext = item.name.rsplit('.', 1)[-1].lower()
-
-        box_files.append({
-            'title': item.name,
-            'url': download_url,
-            'extension': file_ext
-        })
-
+                        box_files.append({
+                            'title': item.name,
+                            'url': file_url,
+                            'extension': ext
+                        })
+        except Exception as e:
+            flash(f"Error accediendo a Box: {e}", 'error')
 
     return render_template('index.html', box_files=box_files)
 
@@ -159,27 +159,29 @@ def upload():
         file.save(filepath)
         flash('Archivo subido localmente', 'success')
 
-        # Subida opcional a Box si hay token
         if 'box_access_token' in session:
-            oauth = OAuth2(
-                client_id=CLIENT_ID,
-                client_secret=CLIENT_SECRET,
-                access_token=session['box_access_token'],
-                refresh_token=session['box_refresh_token'],
-            )
-            client = Client(oauth)
+            try:
+                oauth = OAuth2(
+                    client_id=CLIENT_ID,
+                    client_secret=CLIENT_SECRET,
+                    access_token=session['box_access_token'],
+                    refresh_token=session['box_refresh_token'],
+                    store_tokens=lambda access, refresh: session.update({
+                        'box_access_token': access,
+                        'box_refresh_token': refresh
+                    })
+                )
+                client = Client(oauth)
 
-            # Obtener la carpeta de Box o crearla si no existe
-            folder_name = "ArchivosSubidos"  # El nombre de la carpeta en Box
-            folder = get_or_create_box_folder(client, folder_name)
-
-            # Subir archivo a la carpeta obtenida
-            if folder:
-                with open(filepath, 'rb') as f:
-                    uploaded_item = folder.upload_stream(f, filename)
-                    print(f"Archivo subido a Box: {uploaded_item.name}")
-                os.remove(filepath)  # ✅ Borra el archivo local
-                flash('Archivo también subido a Box', 'success')
+                folder = get_or_create_box_folder(client, "ArchivosSubidos")
+                if folder:
+                    with open(filepath, 'rb') as f:
+                        uploaded_item = folder.upload_stream(f, filename)
+                        print(f"Archivo subido a Box: {uploaded_item.name}")
+                    os.remove(filepath)
+                    flash('Archivo también subido a Box', 'success')
+            except Exception as e:
+                flash(f'Error subiendo a Box: {e}', 'error')
 
     return redirect(url_for('index'))
 
