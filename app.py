@@ -112,19 +112,6 @@ def index():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    docs = []
-    files = os.listdir(app.config['UPLOAD_FOLDER'])
-    for file in files:
-        ext = file.rsplit('.', 1)[1].lower()
-        if ext in ALLOWED_EXTENSIONS:
-            docs.append({
-                'title': file,
-                'filename': file,
-                'is_pdf': ext == 'pdf',
-                'description': 'Documento cargado localmente',
-                'downloadable': True
-            })
-
     box_files = []
     if 'box_access_token' in session:
         oauth = OAuth2(
