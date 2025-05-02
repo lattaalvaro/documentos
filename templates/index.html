@@ -33,7 +33,7 @@
                 <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
                 <h3>{{ doc.title }}</h3>
                 <p>{{ doc.description }}</p>
-                <a href="javascript:void(0);" onclick="openBoxModal('{{ doc.shared_link.split('/')[-1] }}')">Ver documento</a>
+                <a href="javascript:void(0);" onclick="openBoxModal('{{ doc.embed_url }}')">Ver documento</a>
                 <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
             </div>
             {% endfor %}
@@ -46,11 +46,14 @@
     </div>
 
     <script>
-        function openBoxModal(sharedId) {
-            const iframe = document.getElementById('boxViewer');
-            iframe.src = `https://app.box.com/embed/s/${sharedId}`;
-            document.getElementById('boxModal').style.display = 'block';
+        
+       function openBoxModal(embedUrl) {
+           const iframe = document.getElementById('boxViewerIframe');
+           iframe.src = embedUrl;
+           const modal = document.getElementById('boxViewerModal');
+           modal.style.display = 'block';
         }
+
 
         function closeBoxModal() {
             document.getElementById('boxModal').style.display = 'none';
