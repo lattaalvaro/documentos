@@ -48,17 +48,23 @@
     <script>
         
        function openBoxModal(embedUrl) {
-           const iframe = document.getElementById('boxViewerIframe');
-           iframe.src = embedUrl;
-           const modal = document.getElementById('boxViewerModal');
-           modal.style.display = 'block';
+            const iframe = document.getElementById('boxViewerIframe');
+            iframe.src = embedUrl;
+            document.getElementById('boxViewerModal').style.display = 'block';
         }
-
 
         function closeBoxModal() {
-            document.getElementById('boxModal').style.display = 'none';
-            document.getElementById('boxViewer').src = "";
+            const modal = document.getElementById('boxViewerModal');
+            const iframe = document.getElementById('boxViewerIframe');
+            iframe.src = ''; // limpiar para detener reproducción
+            modal.style.display = 'none';
         }
+
+        // Cerrar modal con tecla ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeBoxModal();
+            }
 
         function searchDocuments() {
             const query = document.getElementById("searchInput").value.toLowerCase();
