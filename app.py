@@ -179,6 +179,7 @@ def upload():
                 with open(filepath, 'rb') as f:
                     uploaded_item = folder.upload_stream(f, filename)
                     print(f"Archivo subido a Box: {uploaded_item.name}")
+                os.remove(filepath)  # ✅ Borra el archivo local
                 flash('Archivo también subido a Box', 'success')
 
     return redirect(url_for('index'))
