@@ -14,11 +14,13 @@
     </header>
 
     <div class="upload-search-container">
-        <form class="upload-form" action="{{ url_for('index') }}" method="POST" enctype="multipart/form-data">
+        <!-- Formulario para subir documentos -->
+        <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" id="fileInput" onchange="this.form.submit()">
             <label for="fileInput" class="upload-btn">Subir Documento</label>
         </form>
 
+        <!-- Barra de búsqueda de documentos -->
         <div class="search-container">
             <div class="search-box">
                 <input type="text" id="searchInput" onkeyup="searchDocuments()" placeholder="Buscar...">
@@ -144,4 +146,5 @@
     </script>
 </body>
 </html>
+
 
