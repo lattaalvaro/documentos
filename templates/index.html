@@ -35,12 +35,7 @@
                 <h3>{{ doc.title }}</h3>
                 <p>{{ doc.description }}</p>
 
-                {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
-                {% if ext == 'pdf' %}
-                    <a href="javascript:void(0);" onclick="openPDFModal('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
-                {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
-                    <a href="javascript:void(0);" onclick="openGoogleViewer('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
-                {% endif %}
+                <iframe src="https://app.box.com/embed/file/{{ doc.file_id }}?view=list" width="100%" height="500px" frameborder="0" allowfullscreen></iframe>
 
                 <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
             </div>
@@ -48,91 +43,7 @@
         </div>
     </section>
 
-    <div class="modal" id="pdfModal">
-        <div id="pdfModalContent">
-            <div class="pdf-controls-top">
-                <button onclick="navigatePDF(-1)">Anterior</button>
-                <button onclick="navigatePDF(1)">Siguiente</button>
-            </div>
-            <span class="close-btn" onclick="closePDFModal()">&times;</span>
-            <div id="pdfViewerContainer">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="googleModal">
-        <span class="close-btn" onclick="closeGoogleModal()">&times;</span>
-        <iframe id="googleViewerFrame" width="100%" height="600px" frameborder="0"></iframe>
-    </div>
-
     <script>
-        let pdfDoc = null;
-        let currentPage = 1;
-        const canvas = document.getElementById('pdfCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function openPDFModal(apiUrl) {
-            fetch(apiUrl)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.file_url) {
-                        document.getElementById('pdfModal').style.display = 'block';
-                        pdfjsLib.getDocument(data.file_url).promise.then(function (pdf) {
-                            pdfDoc = pdf;
-                            currentPage = 1;
-                            renderPage(currentPage);
-                        });
-                    } else {
-                        alert("No se pudo obtener el archivo PDF.");
-                    }
-                });
-        }
-
-        function renderPage(pageNumber) {
-            pdfDoc.getPage(pageNumber).then(function (page) {
-                const viewport = page.getViewport({ scale: 1.5 });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                page.render({
-                    canvasContext: ctx,
-                    viewport: viewport
-                });
-            });
-        }
-
-        function navigatePDF(step) {
-            if (pdfDoc) {
-                currentPage += step;
-                if (currentPage < 1) currentPage = 1;
-                if (currentPage > pdfDoc.numPages) currentPage = pdfDoc.numPages;
-                renderPage(currentPage);
-            }
-        }
-
-        function closePDFModal() {
-            document.getElementById('pdfModal').style.display = 'none';
-        }
-
-        function openGoogleViewer(apiUrl) {
-            fetch(apiUrl)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.file_url) {
-                        document.getElementById('googleModal').style.display = 'block';
-                        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(data.file_url)}&embedded=true`;
-                        document.getElementById('googleViewerFrame').src = viewerUrl;
-                    } else {
-                        alert("No se pudo obtener el archivo para Google Viewer.");
-                    }
-                });
-        }
-
-        function closeGoogleModal() {
-            document.getElementById('googleModal').style.display = 'none';
-            document.getElementById('googleViewerFrame').src = "";
-        }
-
         function searchDocuments() {
             const query = document.getElementById("searchInput").value.toLowerCase();
             const docCards = document.querySelectorAll(".doc-card");
@@ -148,6 +59,3 @@
     </script>
 </body>
 </html>
-
-
-
