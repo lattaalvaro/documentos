@@ -121,13 +121,21 @@ def index():
             refresh_token=session['box_refresh_token'],
         )
         client = Client(oauth)
-        root_folder = client.folder('0').get_items()
-        for item in root_folder:
-            box_files.append({
-                'title': item.name,
-                'id': item.id,
-                'description': 'Archivo en Box'
-            })
+
+        # Obtener la carpeta de 'ArchivosSubidos'
+        folder_name = "ArchivosSubidos"
+        folder = get_or_create_box_folder(client, folder_name)
+        
+        # Obtener los archivos dentro de esa carpeta
+        if folder:
+            items = folder.get_items()  # Obtener los elementos dentro de la carpeta
+            for item in items:
+                if item.type == 'file':  # Verifica que el ítem sea un archivo
+                    box_files.append({
+                        'title': item.name,
+                        'id': item.id,
+                        'description': 'Archivo en Box'
+                    })
 
     return render_template('index.html', box_files=box_files)
 
