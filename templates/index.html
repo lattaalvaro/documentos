@@ -77,13 +77,20 @@
         const ctx = canvas.getContext('2d');
 
         function openPDFModal(url) {
-            document.getElementById('pdfModal').style.display = 'block';
-            pdfjsLib.getDocument(url).promise.then(function (pdf) {
-                pdfDoc = pdf;
-                currentPage = 1;
-                renderPage(currentPage);
-            });
-        }
+    fetch(url)
+        .then(response => {
+            if (response.ok) {
+                document.getElementById('pdfModal').style.display = 'block';
+                pdfjsLib.getDocument(url).promise.then(function (pdf) {
+                    pdfDoc = pdf;
+                    currentPage = 1;
+                    renderPage(currentPage);
+                });
+            } else {
+                alert("No autorizado o no se puede cargar el PDF.");
+            }
+        });
+}
 
         function renderPage(pageNumber) {
             pdfDoc.getPage(pageNumber).then(function (page) {
@@ -111,17 +118,19 @@
             document.getElementById('pdfModal').style.display = 'none';
         }
 
-        function openGoogleViewer(fileUrl) {
-            const absoluteUrl = window.location.origin + fileUrl;
-            const googleUrl = `https://docs.google.com/gview?url=${absoluteUrl}&embedded=true`;
-            document.getElementById('googleViewerFrame').src = googleUrl;
-            document.getElementById('googleModal').style.display = 'block';
-        }
-
-        function closeGoogleModal() {
-            document.getElementById('googleModal').style.display = 'none';
-            document.getElementById('googleViewerFrame').src = '';
-        }
+       function openGoogleViewer(fileUrl) {
+    const absoluteUrl = window.location.origin + fileUrl;
+    fetch(fileUrl)
+        .then(response => {
+            if (response.ok) {
+                const googleUrl = `https://docs.google.com/gview?url=${absoluteUrl}&embedded=true`;
+                document.getElementById('googleViewerFrame').src = googleUrl;
+                document.getElementById('googleModal').style.display = 'block';
+            } else {
+                alert("No autorizado o no se puede cargar el documento.");
+            }
+        });
+}
 
         function searchDocuments() {
             var input, filter, docCards, docTitles, i, txtValue;
