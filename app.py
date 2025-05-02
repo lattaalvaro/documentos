@@ -179,12 +179,16 @@ def upload():
 
     return redirect(url_for('index'))
 
+from flask import Flask, render_template, redirect, url_for, session, jsonify
+from boxsdk import OAuth2, Client
+
 @app.route('/view_file/<file_id>')
 def view_file(file_id):
     if 'box_access_token' not in session:
         return redirect(url_for('login'))
 
     try:
+        # Autenticación con Box
         oauth = OAuth2(
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
@@ -196,25 +200,20 @@ def view_file(file_id):
             })
         )
         client = Client(oauth)
+
+        # Obtener archivo y enlace compartido
         file = client.file(file_id).get()
         ext = file.name.rsplit('.', 1)[-1].lower()
         shared_link = file.get_shared_link(access='open')
         file_url = shared_link['download_url']
 
-        if ext == 'pdf':
-            return render_template('view_pdf.html', file_url=file_url, title=file.name)
-        elif ext in ['doc', 'docx']:
-            return render_template('view_doc.html', file_url=file_url, title=file.name)
-        elif ext in ['xls', 'xlsx']:
-            return render_template('view_xls.html', file_url=file_url, title=file.name)
-        elif ext in ['ppt', 'pptx']:
-            return render_template('view_ppt.html', file_url=file_url, title=file.name)
-        else:
-            return redirect(file_url)
+        # Devolver el archivo directamente como URL pública
+        return redirect(file_url)
 
     except Exception as e:
-        return f"Error al visualizar el archivo: {e}", 500
-
+        print("Error al abrir archivo:", e)
+        return redirect(url_for('index'))
+        
 @app.route('/callback')
 def callback():
     code = request.args.get('code')
