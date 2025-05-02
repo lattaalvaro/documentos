@@ -127,20 +127,19 @@ def index():
 
         if folder:
             items = folder.get_items()
-            for item in items:
-                if item.type == 'file':
-                    # ✅ Asegurar que el archivo tiene enlace compartido
-                    if not item.shared_link:
-                        item.shared_link = item.get_shared_link(access='open')
+for item in items:
+    if item.type == 'file':
+        file = client.file(file_id=item.id).get()
+        shared_link = file.get_shared_link(access='open')
+        download_url = shared_link['download_url']
+        file_ext = item.name.rsplit('.', 1)[-1].lower()
 
-                    download_url = item.shared_link['download_url']
-                    file_ext = item.name.rsplit('.', 1)[-1].lower()
+        box_files.append({
+            'title': item.name,
+            'url': download_url,
+            'extension': file_ext
+        })
 
-                    box_files.append({
-                        'title': item.name,
-                        'url': download_url,
-                        'extension': file_ext
-                    })
 
     return render_template('index.html', box_files=box_files)
 
