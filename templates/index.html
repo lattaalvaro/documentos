@@ -28,27 +28,27 @@
         </div>
     </div>
 
-  <section class="recent-docs">
-    <h2>DOCUMENTOS RECIENTES</h2>
-    <div class="doc-list">
-        {% for doc in box_files %}
-        <div class="doc-card">
-            <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
-            <h3>{{ doc.title }}</h3>
-            <p>{{ doc.description }}</p>
+    <section class="recent-docs">
+        <h2>DOCUMENTOS RECIENTES</h2>
+        <div class="doc-list">
+            {% for doc in box_files %}
+            <div class="doc-card">
+                <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
+                <h3>{{ doc.title }}</h3>
+                <p>{{ doc.description }}</p>
 
-            {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
-            {% if ext == 'pdf' %}
-                <a href="javascript:void(0);" onclick="openPDFModal('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
-            {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
-                <a href="javascript:void(0);" onclick="openGoogleViewer('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
-            {% endif %}
+                {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
+                {% if ext == 'pdf' %}
+                    <a href="javascript:void(0);" onclick="openPDFModal('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
+                {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
+                    <a href="javascript:void(0);" onclick="openGoogleViewer('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
+                {% endif %}
 
-            <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
+                <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-  </section>
+    </section>
 
     <!-- Modal PDF.js -->
     <div class="modal" id="pdfModal">
@@ -77,20 +77,20 @@
         const ctx = canvas.getContext('2d');
 
         function openPDFModal(url) {
-    fetch(url)
-        .then(response => {
-            if (response.ok) {
-                document.getElementById('pdfModal').style.display = 'block';
-                pdfjsLib.getDocument(url).promise.then(function (pdf) {
-                    pdfDoc = pdf;
-                    currentPage = 1;
-                    renderPage(currentPage);
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('pdfModal').style.display = 'block';
+                        pdfjsLib.getDocument(url).promise.then(function (pdf) {
+                            pdfDoc = pdf;
+                            currentPage = 1;
+                            renderPage(currentPage);
+                        });
+                    } else {
+                        alert("No autorizado o no se puede cargar el PDF.");
+                    }
                 });
-            } else {
-                alert("No autorizado o no se puede cargar el PDF.");
-            }
-        });
-}
+        }
 
         function renderPage(pageNumber) {
             pdfDoc.getPage(pageNumber).then(function (page) {
@@ -118,19 +118,23 @@
             document.getElementById('pdfModal').style.display = 'none';
         }
 
-       function openGoogleViewer(fileUrl) {
-    const absoluteUrl = window.location.origin + fileUrl;
-    fetch(fileUrl)
-        .then(response => {
-            if (response.ok) {
-                const googleUrl = `https://docs.google.com/gview?url=${absoluteUrl}&embedded=true`;
-                document.getElementById('googleViewerFrame').src = googleUrl;
-                document.getElementById('googleModal').style.display = 'block';
-            } else {
-                alert("No autorizado o no se puede cargar el documento.");
-            }
-        });
-}
+        function openGoogleViewer(fileUrl) {
+            const absoluteUrl = window.location.origin + fileUrl;
+            fetch(fileUrl)
+                .then(response => {
+                    if (response.ok) {
+                        const googleUrl = `https://docs.google.com/gview?url=${absoluteUrl}&embedded=true`;
+                        document.getElementById('googleViewerFrame').src = googleUrl;
+                        document.getElementById('googleModal').style.display = 'block';
+                    } else {
+                        alert("No autorizado o no se puede cargar el documento.");
+                    }
+                });
+        }
+
+        function closeGoogleModal() {
+            document.getElementById('googleModal').style.display = 'none';
+        }
 
         function searchDocuments() {
             var input, filter, docCards, docTitles, i, txtValue;
