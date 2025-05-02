@@ -5,43 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro Militar de Documentos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 9999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.9);
-        }
-
-        .modal iframe {
-            display: block;
-            margin: 5% auto;
-            width: 90%;
-            height: 80%;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 0 20px black;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 25px;
-            color: #fff;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close-btn:hover {
-            color: red;
-        }
-    </style>
 </head>
 <body>
     <header>
@@ -70,39 +33,31 @@
                 <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
                 <h3>{{ doc.title }}</h3>
                 <p>{{ doc.description }}</p>
-                <a href="javascript:void(0);" onclick="openBoxModal('{{ doc.embed_url }}')">Ver documento</a>
+                <a href="javascript:void(0);" onclick="openViewerModal('{{ url_for('preview', file_id=doc.file_id) }}')">Ver documento</a>
                 <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
             </div>
             {% endfor %}
         </div>
     </section>
 
-    <!-- Modal Box viewer -->
-    <div class="modal" id="boxModal">
-        <span class="close-btn" onclick="closeBoxModal()">&times;</span>
-        <iframe id="boxViewer" allowfullscreen></iframe>
+    <div class="modal" id="viewerModal">
+        <span class="close-btn" onclick="closeViewerModal()">&times;</span>
+        <iframe id="viewerIframe" width="100%" height="600px" frameborder="0"></iframe>
     </div>
 
     <script>
-        function openBoxModal(embedUrl) {
-            const iframe = document.getElementById('boxViewer');
-            iframe.src = embedUrl;
-            document.getElementById('boxModal').style.display = 'block';
+        function openViewerModal(fileUrl) {
+            const iframe = document.getElementById('viewerIframe');
+            iframe.src = `https://docs.google.com/gview?url=${fileUrl}&embedded=true`;
+            document.getElementById('viewerModal').style.display = 'block';
         }
 
-        function closeBoxModal() {
-            const modal = document.getElementById('boxModal');
-            const iframe = document.getElementById('boxViewer');
-            iframe.src = ''; // limpiar para detener reproducción
+        function closeViewerModal() {
+            const modal = document.getElementById('viewerModal');
+            const iframe = document.getElementById('viewerIframe');
+            iframe.src = '';
             modal.style.display = 'none';
         }
-
-        // Cerrar modal con tecla ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeBoxModal();
-            }
-        });
 
         function searchDocuments() {
             const query = document.getElementById("searchInput").value.toLowerCase();
@@ -112,6 +67,12 @@
                 card.style.display = title.includes(query) ? "block" : "none";
             });
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeViewerModal();
+            }
+        });
     </script>
 </body>
 </html>
