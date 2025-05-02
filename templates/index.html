@@ -39,17 +39,17 @@
 
             {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
             {% if ext == 'pdf' %}
-            <a href="https://app.box.com/file/{{ doc.id }}/preview" target="_blank">Ver documento</a>
+            <a href="javascript:void(0);" onclick="openPDFModal('https://app.box.com/file/{{ doc.id }}/preview')">Ver documento</a>
             {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
-            <a href="https://app.box.com/file/{{ doc.id }}/preview" target="_blank">Ver documento</a>
+            <a href="javascript:void(0);" onclick="openGoogleViewer('https://app.box.com/file/{{ doc.id }}/preview')">Ver documento</a>
             {% endif %}
 
             <a href="https://api.box.com/2.0/files/{{ doc.id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
         </div>
         {% endfor %}
     </div>
-</section>
-    
+  </section>
+
     <!-- Modal PDF.js -->
     <div class="modal" id="pdfModal">
         <div id="pdfModalContent">
@@ -144,5 +144,6 @@
     </script>
 </body>
 </html>
+
 
 
