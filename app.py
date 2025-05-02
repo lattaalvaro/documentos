@@ -36,6 +36,33 @@ def save_user_firebase(email):
     response = requests.post(FIREBASE_URL[:-5] + '.json', json=user_data)
     return response.status_code == 200
 
+# Crear una carpeta en Box
+def create_box_folder(client, folder_name):
+    try:
+        # Crear una carpeta en la raíz (root folder) de Box
+        folder = client.folder('0').create_subfolder(folder_name)
+        print(f"Carpeta '{folder_name}' creada en Box")
+        return folder
+    except Exception as e:
+        print(f"Error creando la carpeta: {e}")
+        return None
+
+# Verificar si la carpeta ya existe
+def get_or_create_box_folder(client, folder_name):
+    try:
+        # Buscar la carpeta por nombre
+        items = client.folder('0').get_items()
+        for item in items:
+            if item.name == folder_name and item.type == 'folder':
+                print(f"Carpeta '{folder_name}' ya existe en Box")
+                return item  # Si la carpeta existe, la devolvemos
+
+        # Si la carpeta no existe, crearla
+        return create_box_folder(client, folder_name)
+    except Exception as e:
+        print(f"Error buscando o creando la carpeta: {e}")
+        return None
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -142,9 +169,17 @@ def upload():
                 refresh_token=session['box_refresh_token'],
             )
             client = Client(oauth)
-            with open(filepath, 'rb') as f:
-                client.folder('0').upload_stream(f, filename)
-            flash('Archivo también subido a Box', 'success')
+
+            # Obtener la carpeta de Box o crearla si no existe
+            folder_name = "ArchivosSubidos"  # El nombre de la carpeta en Box
+            folder = get_or_create_box_folder(client, folder_name)
+
+            # Subir archivo a la carpeta obtenida
+            if folder:
+                with open(filepath, 'rb') as f:
+                    uploaded_item = folder.upload_stream(f, filename)
+                    print(f"Archivo subido a Box: {uploaded_item.name}")
+                flash('Archivo también subido a Box', 'success')
 
     return redirect(url_for('index'))
 
@@ -160,6 +195,9 @@ def callback():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
