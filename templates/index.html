@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro Militar de Documentos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
 </head>
 <body>
     <header>
@@ -34,38 +33,30 @@
                 <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
                 <h3>{{ doc.title }}</h3>
                 <p>{{ doc.description }}</p>
-
-                <a href="javascript:void(0);" onclick="openBoxModal('{{ doc.file_id }}')">Ver documento</a>
-
+                <a href="javascript:void(0);" onclick="openBoxModal('{{ doc.shared_link.split('/')[-1] }}')">Ver documento</a>
                 <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
             </div>
             {% endfor %}
         </div>
     </section>
 
-    <!-- Modal para ver documentos de Box -->
     <div class="modal" id="boxModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeBoxModal()">&times;</span>
-            <iframe id="boxViewer" src="" width="100%" height="600px" frameborder="0" allowfullscreen></iframe>
-        </div>
+        <span class="close-btn" onclick="closeBoxModal()">&times;</span>
+        <iframe id="boxViewer" width="100%" height="600px" frameborder="0"></iframe>
     </div>
 
     <script>
-        // Función para abrir el modal con el iframe de Box
-        function openBoxModal(fileId) {
+        function openBoxModal(sharedId) {
             const iframe = document.getElementById('boxViewer');
-            iframe.src = `https://app.box.com/embed/file/${fileId}?view=list`;
+            iframe.src = `https://app.box.com/embed/s/${sharedId}`;
             document.getElementById('boxModal').style.display = 'block';
         }
 
-        // Función para cerrar el modal
         function closeBoxModal() {
             document.getElementById('boxModal').style.display = 'none';
-            document.getElementById('boxViewer').src = '';  // Limpiar la fuente del iframe
+            document.getElementById('boxViewer').src = "";
         }
 
-        // Función para buscar documentos
         function searchDocuments() {
             const query = document.getElementById("searchInput").value.toLowerCase();
             const docCards = document.querySelectorAll(".doc-card");
@@ -79,44 +70,6 @@
             });
         }
     </script>
-
-    <style>
-        /* Estilo para el modal */
-        .modal {
-            display: none; 
-            position: fixed;
-            z-index: 1; 
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 900px;
-        }
-
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close-btn:hover,
-        .close-btn:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-    </style>
 </body>
 </html>
 
