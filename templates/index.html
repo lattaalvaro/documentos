@@ -37,18 +37,14 @@
             <h3>{{ doc.title }}</h3>
             <p>{{ doc.description }}</p>
 
-            {% if '.' in doc.title %}
-  {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
-{% else %}
-  {% set ext = '' %}
-{% endif %}
+            {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
             {% if ext == 'pdf' %}
-            <a href="javascript:void(0);" onclick="openPDFModal('https://app.box.com/file/{{ doc.id }}/preview')">Ver documento</a>
+                <a href="javascript:void(0);" onclick="openPDFModal('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
             {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
-            <a href="javascript:void(0);" onclick="openGoogleViewer('https://app.box.com/file/{{ doc.id }}/preview')">Ver documento</a>
+                <a href="javascript:void(0);" onclick="openGoogleViewer('{{ url_for('view_file', file_id=doc.file_id) }}')">Ver documento</a>
             {% endif %}
 
-            <a href="https://api.box.com/2.0/files/{{ doc.id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
+            <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
         </div>
         {% endfor %}
     </div>
@@ -148,6 +144,4 @@
     </script>
 </body>
 </html>
-
-
 
