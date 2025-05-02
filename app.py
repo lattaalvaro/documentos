@@ -122,19 +122,24 @@ def index():
         )
         client = Client(oauth)
 
-        # Obtener la carpeta de 'ArchivosSubidos'
         folder_name = "ArchivosSubidos"
         folder = get_or_create_box_folder(client, folder_name)
-        
-        # Obtener los archivos dentro de esa carpeta
+
         if folder:
-            items = folder.get_items()  # Obtener los elementos dentro de la carpeta
+            items = folder.get_items()
             for item in items:
-                if item.type == 'file':  # Verifica que el ítem sea un archivo
+                if item.type == 'file':
+                    # ✅ Asegurar que el archivo tiene enlace compartido
+                    if not item.shared_link:
+                        item.shared_link = item.get_shared_link(access='open')
+
+                    download_url = item.shared_link['download_url']
+                    file_ext = item.name.rsplit('.', 1)[-1].lower()
+
                     box_files.append({
                         'title': item.name,
-                        'id': item.id,
-                        'description': 'Archivo en Box'
+                        'url': download_url,
+                        'extension': file_ext
                     })
 
     return render_template('index.html', box_files=box_files)
