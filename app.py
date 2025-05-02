@@ -15,8 +15,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 FIREBASE_URL = 'https://military-docs-b008c-default-rtdb.firebaseio.com/usuarios.json'
 
 # Box credentials
-CLIENT_ID = '2ts00mxacah309ml7cj88nde8mer8b7p'
-CLIENT_SECRET = 'cM5JdqQbzCUj3bssQ0ax7AdF1XBkMkWm'
+CLIENT_ID = 'xmwe4k8mabm488z87nj07cyqtc4wtplt'
+CLIENT_SECRET = 'Az8Zyr85ehEXe5HgkNa7kXgM3I82iZKL'
 REDIRECT_URI = 'https://documentosmilitares.onrender.com/callback'
 
 box_oauth = OAuth2(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
