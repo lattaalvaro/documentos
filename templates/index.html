@@ -28,30 +28,28 @@
         </div>
     </div>
 
-    <section class="recent-docs">
-        <h2>DOCUMENTOS RECIENTES</h2>
-        <div class="doc-list">
-            {% for doc in docs %}
-            <div class="doc-card">
-                <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
-                <h3>{{ doc.title }}</h3>
-                <p>{{ doc.description }}</p>
+  <section class="recent-docs">
+    <h2>DOCUMENTOS RECIENTES</h2>
+    <div class="doc-list">
+        {% for doc in box_files %}
+        <div class="doc-card">
+            <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
+            <h3>{{ doc.title }}</h3>
+            <p>{{ doc.description }}</p>
 
-                {% set ext = doc.filename.rsplit('.', 1)[1].lower() %}
-                {% if ext == 'pdf' %}
-                <a href="#" onclick="openPDFModal('{{ url_for('uploaded_file', filename=doc.filename) }}'); return false;">Ver documento</a>
-                {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
-                <a href="#" onclick="openGoogleViewer('{{ url_for('uploaded_file', filename=doc.filename) }}'); return false;">Ver documento</a>
-                {% endif %}
+            {% set ext = doc.title.rsplit('.', 1)[1].lower() %}
+            {% if ext == 'pdf' %}
+            <a href="https://app.box.com/file/{{ doc.id }}/preview" target="_blank">Ver documento</a>
+            {% elif ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'] %}
+            <a href="https://app.box.com/file/{{ doc.id }}/preview" target="_blank">Ver documento</a>
+            {% endif %}
 
-                {% if doc.downloadable %}
-                <a href="{{ url_for('uploaded_file', filename=doc.filename) }}" download class="btn btn-primary">Descargar original</a>
-                {% endif %}
-            </div>
-            {% endfor %}
+            <a href="https://api.box.com/2.0/files/{{ doc.id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
         </div>
-    </section>
-
+        {% endfor %}
+    </div>
+</section>
+    
     <!-- Modal PDF.js -->
     <div class="modal" id="pdfModal">
         <div id="pdfModalContent">
