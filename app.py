@@ -174,15 +174,17 @@ def upload():
 @app.route('/callback')
 def callback():
     code = request.args.get('code')
-    access_token, refresh_token = box_oauth.authenticate(code)
-    session['box_access_token'] = access_token
-    session['box_refresh_token'] = refresh_token
-    flash('Conectado con Box correctamente.', 'success')
-    return redirect(url_for('index'))
+    if not code:
+        return 'No se recibió ningún código de Box.', 400
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    try:
+        access_token, refresh_token = box_oauth.authenticate(code)
+        session['box_access_token'] = access_token
+        session['box_refresh_token'] = refresh_token
+        flash('Conectado con Box correctamente.', 'success')
+        return redirect(url_for('index'))
+    except Exception as e:
+        return f"Error al intercambiar el código por tokens: {e}", 500
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
