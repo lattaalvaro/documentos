@@ -182,9 +182,6 @@ def upload():
 @app.route('/view_file/<file_id>')
 def view_file(file_id):
     if 'box_access_token' not in session:
-        # Si es una petición desde iframe o visor, devuelve 403 para que no intente mostrar el HTML del login
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-            return jsonify({'error': 'No autorizado'}), 403
         return redirect(url_for('login'))
 
     try:
@@ -201,18 +198,20 @@ def view_file(file_id):
         client = Client(oauth)
         file = client.file(file_id).get()
 
-        # Vamos a imprimir la respuesta para ver qué contiene
-        print("Detalles del archivo:", file)
+        # Obtener el enlace compartido
+        shared_link = file.get_shared_link(access='open')
 
-        shared_link = file.get_shared_link()  # Esta es la corrección anterior
-        print("Enlace compartido:", shared_link)
+        # Convertir a enlace directo si es posible (solo funciona con archivos públicos y no todos los formatos)
+        # Para archivos PDF, esto usualmente funciona:
+        direct_url = shared_link.replace("https://app.box.com/s/", "https://box.com/shared/static/")
 
-        # Si el enlace compartido tiene un 'download_url', lo usaremos
-        if 'download_url' in shared_link:
-            file_url = shared_link['download_url']
-            return redirect(file_url)
-        else:
-            raise Exception('No se pudo obtener el enlace de descarga del archivo')
+        # Agregamos extensión si es necesaria (solo para PDF.js)
+        ext = file.name.rsplit('.', 1)[-1].lower()
+        if ext == "pdf":
+            direct_url += ".pdf"
+
+        # Redirigimos al index pasando la URL directa
+        return redirect(url_for('index', file_url=direct_url, ext=ext))
 
     except Exception as e:
         print("Error al obtener el archivo:", e)
