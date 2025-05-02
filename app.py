@@ -182,6 +182,9 @@ def upload():
 @app.route('/view_file/<file_id>')
 def view_file(file_id):
     if 'box_access_token' not in session:
+        # Si es una petición desde iframe o visor, devuelve 403 para que no intente mostrar el HTML del login
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({'error': 'No autorizado'}), 403
         return redirect(url_for('login'))
 
     try:
@@ -197,10 +200,19 @@ def view_file(file_id):
         )
         client = Client(oauth)
         file = client.file(file_id).get()
-        shared_link = file.get_shared_link(access='open')
-        file_url = shared_link['download_url']
 
-        return redirect(file_url)
+        # Vamos a imprimir la respuesta para ver qué contiene
+        print("Detalles del archivo:", file)
+
+        shared_link = file.get_shared_link()  # Esta es la corrección anterior
+        print("Enlace compartido:", shared_link)
+
+        # Si el enlace compartido tiene un 'download_url', lo usaremos
+        if 'download_url' in shared_link:
+            file_url = shared_link['download_url']
+            return redirect(file_url)
+        else:
+            raise Exception('No se pudo obtener el enlace de descarga del archivo')
 
     except Exception as e:
         print("Error al obtener el archivo:", e)
