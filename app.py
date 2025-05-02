@@ -197,29 +197,26 @@ def callback():
     except Exception as e:
         return f"Error al intercambiar el código por tokens: {e}", 500
 
-@app.route('/view_file/<file_id>')
-def view_file(file_id):
-    if 'box_access_token' not in session:
-        return jsonify({"error": "No autorizado"}), 403
+@app.route('/preview/<file_id>')
+def preview(file_id):
+    access_token = session.get('box_access_token')
+    if not access_token:
+        return "Acceso no autorizado", 403
 
-    try:
-        oauth = OAuth2(
-            client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET,
-            access_token=session['box_access_token'],
-            refresh_token=session['box_refresh_token'],
-            store_tokens=lambda access, refresh: session.update({
-                'box_access_token': access,
-                'box_refresh_token': refresh
-            })
-        )
-        client = Client(oauth)
-        shared_link = client.file(file_id).get_shared_link(access='open')
-        embed_url = f"https://app.box.com/embed/s/{shared_link.split('/')[-1]}"
-        return jsonify({"file_url": embed_url})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    url = f'https://api.box.com/2.0/files/{file_id}/content'
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = requests.get(url, headers=headers, stream=True)
 
+    if response.status_code == 200:
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                temp_file.write(chunk)
+        temp_file.close()
+        return send_file(temp_file.name, as_attachment=False)
+    else:
+        return "Error al obtener el archivo", 400
+        
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
