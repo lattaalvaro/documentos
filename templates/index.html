@@ -72,18 +72,19 @@
         const canvas = document.getElementById('pdfCanvas');
         const ctx = canvas.getContext('2d');
 
-        function openPDFModal(url) {
-            fetch(url)
-                .then(response => {
-                    if (response.ok) {
+        function openPDFModal(apiUrl) {
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.file_url) {
                         document.getElementById('pdfModal').style.display = 'block';
-                        pdfjsLib.getDocument(url).promise.then(function (pdf) {
+                        pdfjsLib.getDocument(data.file_url).promise.then(function (pdf) {
                             pdfDoc = pdf;
                             currentPage = 1;
                             renderPage(currentPage);
                         });
                     } else {
-                        alert("No autorizado o no se puede cargar el PDF.");
+                        alert("No se pudo obtener el archivo PDF.");
                     }
                 });
         }
@@ -113,10 +114,18 @@
             document.getElementById('pdfModal').style.display = 'none';
         }
 
-        function openGoogleViewer(url) {
-            document.getElementById('googleModal').style.display = 'block';
-            const viewerUrl = `https://docs.google.com/viewer?url=${url}`;
-            document.getElementById('googleViewerFrame').src = viewerUrl;
+        function openGoogleViewer(apiUrl) {
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.file_url) {
+                        document.getElementById('googleModal').style.display = 'block';
+                        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(data.file_url)}&embedded=true`;
+                        document.getElementById('googleViewerFrame').src = viewerUrl;
+                    } else {
+                        alert("No se pudo obtener el archivo para Google Viewer.");
+                    }
+                });
         }
 
         function closeGoogleModal() {
@@ -139,5 +148,6 @@
     </script>
 </body>
 </html>
+
 
 
