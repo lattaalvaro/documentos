@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, flash
 from werkzeug.utils import secure_filename
 import requests
+from boxsdk import OAuth2, Client
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
@@ -10,7 +11,15 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Firebase
 FIREBASE_URL = 'https://military-docs-b008c-default-rtdb.firebaseio.com/usuarios.json'
+
+# Box credentials
+CLIENT_ID = 'p0g0j6agqo7sf8no0y4t90vg2clyghla'
+CLIENT_SECRET = 'rb4W92KieIUz3x2eQqIMHncWaPZcGDEw'
+REDIRECT_URI = 'https://documentosmilitares.onrender.com/callback'
+
+box_oauth = OAuth2(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -67,28 +76,17 @@ def register():
 @app.route('/logout')
 def logout():
     session.pop('user', None)
+    session.pop('box_access_token', None)
+    session.pop('box_refresh_token', None)
     return redirect(url_for('login'))
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    if request.method == 'POST':
-        file = request.files.get('file')
-        if not file or file.filename == '':
-            return redirect(request.url)
-
-        if allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
-        return redirect(url_for('index'))
-
     docs = []
     files = os.listdir(app.config['UPLOAD_FOLDER'])
-
     for file in files:
         ext = file.rsplit('.', 1)[1].lower()
         if ext in ALLOWED_EXTENSIONS:
@@ -96,11 +94,68 @@ def index():
                 'title': file,
                 'filename': file,
                 'is_pdf': ext == 'pdf',
-                'description': 'Documento cargado',
+                'description': 'Documento cargado localmente',
                 'downloadable': True
             })
 
-    return render_template('index.html', docs=docs)
+    box_files = []
+    if 'box_access_token' in session:
+        oauth = OAuth2(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            access_token=session['box_access_token'],
+            refresh_token=session['box_refresh_token'],
+        )
+        client = Client(oauth)
+        root_folder = client.folder('0').get_items()
+        for item in root_folder:
+            box_files.append({
+                'title': item.name,
+                'id': item.id,
+                'description': 'Archivo en Box'
+            })
+
+    return render_template('index.html', docs=docs, box_files=box_files)
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        flash('No se seleccionó ningún archivo', 'error')
+        return redirect(url_for('index'))
+
+    if allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        flash('Archivo subido localmente', 'success')
+
+        # Subida opcional a Box si hay token
+        if 'box_access_token' in session:
+            oauth = OAuth2(
+                client_id=CLIENT_ID,
+                client_secret=CLIENT_SECRET,
+                access_token=session['box_access_token'],
+                refresh_token=session['box_refresh_token'],
+            )
+            client = Client(oauth)
+            with open(filepath, 'rb') as f:
+                client.folder('0').upload_stream(f, filename)
+            flash('Archivo también subido a Box', 'success')
+
+    return redirect(url_for('index'))
+
+@app.route('/callback')
+def callback():
+    code = request.args.get('code')
+    access_token, refresh_token = box_oauth.authenticate(code)
+    session['box_access_token'] = access_token
+    session['box_refresh_token'] = refresh_token
+    flash('Conectado con Box correctamente.', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
