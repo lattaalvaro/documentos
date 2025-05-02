@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, flash
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, flash, jsonify
 from werkzeug.utils import secure_filename
 import requests
 from boxsdk import OAuth2, Client
@@ -179,18 +179,9 @@ def upload():
 
     return redirect(url_for('index'))
 
-from flask import Flask, render_template, redirect, url_for, session, jsonify
-from boxsdk import OAuth2, Client
-
-from flask import Flask, render_template, redirect, url_for, session, jsonify, request
-from boxsdk import OAuth2, Client
-
 @app.route('/view_file/<file_id>')
 def view_file(file_id):
     if 'box_access_token' not in session:
-        # Si es una petición desde iframe o visor, devuelve 403 para que no intente mostrar el HTML del login
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-            return jsonify({'error': 'No autorizado'}), 403
         return redirect(url_for('login'))
 
     try:
