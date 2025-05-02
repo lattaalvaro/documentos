@@ -129,7 +129,7 @@ def index():
                 'description': 'Archivo en Box'
             })
 
-    return render_template('index.html', docs=docs, box_files=box_files)
+    return render_template('index.html', box_files=box_files)
 
 @app.route('/upload', methods=['POST'])
 def upload():
