@@ -5,6 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro Militar de Documentos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Estilos para el modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            height: 85%;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover {
+            color: #555;
+        }
+        
+        .document-iframe {
+            width: 100%;
+            height: 90%;
+            border: none;
+        }
+        
+        .modal-title {
+            margin-top: 0;
+            padding-right: 30px; /* Espacio para el botón de cerrar */
+        }
+        
+        .modal-actions {
+            margin-top: 10px;
+            text-align: right;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -51,7 +106,7 @@
                     <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
                     <h3>{{ doc.title }}</h3>
                     <div class="doc-actions">
-                        <a href="{{ url_for('preview', file_id=doc.file_id.lstrip('/')) }}" class="btn btn-primary">Ver documento</a>
+                        <a href="#" class="btn btn-primary" onclick="viewDocument('{{ doc.file_id }}', '{{ doc.title }}'); return false;">Ver documento</a>
                         <a href="{{ doc.url }}" class="btn download-btn" download>Descargar</a>
                     </div>
                 </div>
@@ -61,6 +116,18 @@
             {% endif %}
         </div>
     </section>
+    
+    <!-- Modal para visualizar documentos -->
+    <div id="documentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle" class="modal-title"></h3>
+            <iframe id="documentFrame" class="document-iframe" src=""></iframe>
+            <div class="modal-actions">
+                <a id="downloadLink" href="#" class="btn download-btn" download>Descargar</a>
+            </div>
+        </div>
+    </div>
     
     <script>
         function searchDocuments() {
@@ -95,6 +162,97 @@
             const label = document.querySelector('label[for="fileInput"]');
             label.textContent = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
         });
+        
+        // Funciones para el modal
+        function viewDocument(fileId, title) {
+            // Obtener el iframe y establecer su src
+            const iframe = document.getElementById('documentFrame');
+            const fileExtension = title.split('.').pop().toLowerCase();
+            
+            // Limpiar iframe anterior
+            iframe.src = '';
+            
+            // Establecer título del modal
+            document.getElementById('modalTitle').textContent = title;
+            
+            // Obtener la URL del documento y configurar el modal
+            fetch(`/get_document_url/${fileId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Configurar el enlace de descarga
+                        document.getElementById('downloadLink').href = data.url;
+                        
+                        // Configurar el iframe según el tipo de documento
+                        if (['pdf'].includes(fileExtension)) {
+                            // PDF directo
+                            iframe.src = data.url;
+                        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                            // Imágenes - crear HTML para mostrarlas
+                            iframe.src = `data:text/html;charset=utf-8,
+                                <html>
+                                    <head>
+                                        <style>
+                                            body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+                                            img { max-width: 100%; max-height: 100%; object-fit: contain; }
+                                        </style>
+                                    </head>
+                                    <body><img src="${data.url}" alt="${title}"></body>
+                                </html>`;
+                        } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension)) {
+                            // Documentos Office - usar visor de Office Online
+                            iframe.src = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(data.url)}`;
+                        } else {
+                            // Otros archivos - mostrar mensaje
+                            iframe.src = `data:text/html;charset=utf-8,
+                                <html>
+                                    <head>
+                                        <style>
+                                            body { 
+                                                font-family: Arial, sans-serif; 
+                                                display: flex; 
+                                                justify-content: center; 
+                                                align-items: center; 
+                                                height: 100vh; 
+                                                text-align: center;
+                                                padding: 20px;
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div>
+                                            <h1>Previsualización no disponible</h1>
+                                            <p>Este tipo de archivo no puede ser visualizado directamente.</p>
+                                            <p>Utilice el botón "Descargar" para abrir el archivo.</p>
+                                        </div>
+                                    </body>
+                                </html>`;
+                        }
+                        
+                        // Mostrar el modal
+                        document.getElementById('documentModal').style.display = 'block';
+                    } else {
+                        alert('Error al cargar el documento: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al procesar la solicitud: ' + error);
+                });
+        }
+        
+        function closeModal() {
+            document.getElementById('documentModal').style.display = 'none';
+            document.getElementById('documentFrame').src = '';
+        }
+        
+        // Cerrar el modal al hacer clic fuera del contenido
+        window.onclick = function(event) {
+            const modal = document.getElementById('documentModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
     </script>
 </body>
 </html>
