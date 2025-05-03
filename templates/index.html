@@ -125,6 +125,7 @@
             <iframe id="documentFrame" class="document-iframe" src=""></iframe>
             <div class="modal-actions">
                 <a id="downloadLink" href="#" class="btn download-btn" download>Descargar</a>
+                <a id="viewPdfInNewTab" href="#" class="btn btn-primary" style="display: none;" target="_blank">Ver PDF en nueva pestaña</a>
             </div>
         </div>
     </div>
@@ -178,6 +179,9 @@ function viewDocument(fileId, title) {
     // Detectar si es un dispositivo móvil
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
+    // Mostrar el modal primero (para evitar problemas de carga)
+    document.getElementById('documentModal').style.display = 'block';
+    
     // Obtener la URL del documento y configurar el modal
     fetch(`/get_document_url/${fileId}`)
         .then(response => response.json())
@@ -187,13 +191,47 @@ function viewDocument(fileId, title) {
                 document.getElementById('downloadLink').href = data.url;
                 
                 // Configurar el iframe según el tipo de documento
-                if (['pdf'].includes(fileExtension)) {
-                    // PDF directo - para móviles podemos usar Google PDF Viewer para mejor compatibilidad
-                    if (isMobile) {
-                        iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
-                    } else {
-                        iframe.src = data.url;
-                    }
+                // Dentro de la función viewDocument, añade esto en la sección de PDFs:
+if (['pdf'].includes(fileExtension)) {
+    // Configurar el botón de vista alternativa para PDFs
+    const viewPdfBtn = document.getElementById('viewPdfInNewTab');
+    viewPdfBtn.style.display = 'inline-block';
+    viewPdfBtn.href = `/view_pdf/${fileId}`;
+} else {
+    // Ocultar el botón para otros tipos de archivos
+    document.getElementById('viewPdfInNewTab').style.display = 'none';
+}
+                    // Usar Google PDF Viewer para todos los dispositivos para mejorar compatibilidad
+                    const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
+                    iframe.src = pdfViewerUrl;
+                    
+                    // Fallback por si Google Viewer falla
+                    iframe.onerror = function() {
+                        // Intentar con PDF.js (incluido en muchos navegadores modernos)
+                        iframe.src = `about:blank`;
+                        iframe.onload = function() {
+                            iframe.contentWindow.document.write(`
+                                <html>
+                                    <head>
+                                        <title>Visor PDF</title>
+                                        <style>
+                                            body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                                            #pdf-container { width: 100%; height: 100%; }
+                                            .message { font-family: Arial; text-align: center; margin-top: 100px; }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div id="pdf-container">
+                                            <embed src="${data.url}" type="application/pdf" width="100%" height="100%">
+                                            <p class="message">Si el documento no se visualiza correctamente, 
+                                                <a href="${data.url}" target="_blank">haga clic aquí para abrirlo en una nueva pestaña</a> 
+                                                o use el botón de descarga.</p>
+                                        </div>
+                                    </body>
+                                </html>
+                            `);
+                        };
+                    };
                 } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
                     // Imágenes - crear HTML responsive para mostrarlas
                     iframe.src = `data:text/html;charset=utf-8,
@@ -267,15 +305,14 @@ function viewDocument(fileId, title) {
                             </body>
                         </html>`;
                 }
-                
-                // Mostrar el modal
-                document.getElementById('documentModal').style.display = 'block';
             } else {
+                closeModal();
                 alert('Error al cargar el documento: ' + (data.error || 'Error desconocido'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
+            closeModal();
             alert('Error al procesar la solicitud: ' + error);
         });
 }
