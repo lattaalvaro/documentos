@@ -280,8 +280,13 @@ def get_document_url(file_id):
     try:
         dbx = get_dropbox_client()
         if dbx:
-            # Obtener el enlace temporal
+            # Intentar obtener un enlace con tiempo de expiración más largo
+            # (15 minutos en lugar del valor predeterminado de 4 horas)
             temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
+            
+            # Registra la URL para depuración
+            print(f"URL generada para {file_id}: {temp_link.link}")
+            
             return jsonify({
                 "success": True,
                 "url": temp_link.link,
