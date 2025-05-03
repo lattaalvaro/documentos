@@ -28,13 +28,13 @@
     <section class="recent-docs">
         <h2>DOCUMENTOS RECIENTES</h2>
         <div class="doc-list">
-            {% for doc in box_files %}
+            {% for doc in dropbox_files %}
             <div class="doc-card">
                 <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
                 <h3>{{ doc.title }}</h3>
                 <p>{{ doc.description }}</p>
-                <a href="javascript:void(0);" onclick="openViewerModal('{{ url_for('preview', file_id=doc.file_id) }}')">Ver documento</a>
-                <a href="https://api.box.com/2.0/files/{{ doc.file_id }}/content?access_token={{ session['box_access_token'] }}" class="btn btn-primary" download>Descargar original</a>
+                <a href="javascript:void(0);" onclick="openViewerModal('{{ doc.embed_url }}')">Ver documento</a>
+                <a href="{{ doc.download_url }}" class="btn btn-primary" download>Descargar original</a>
             </div>
             {% endfor %}
         </div>
@@ -76,4 +76,3 @@
     </script>
 </body>
 </html>
-
