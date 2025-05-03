@@ -228,42 +228,13 @@ def preview(file_id):
         if dbx:
             # Obtener el enlace temporal
             temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
-            
-            # Obtener la extensión del archivo
-            file_extension = file_id.split('.')[-1].lower() if '.' in file_id else ''
-            
-            # Determinar el tipo de visualización basado en la extensión
-            if file_extension in ['pdf']:
-                # Los PDF se pueden mostrar directamente en el navegador
-                return render_template('document_viewer.html', 
-                                      doc_url=temp_link.link,
-                                      doc_title=file_id.split('/')[-1],
-                                      doc_type='pdf')
-            elif file_extension in ['jpg', 'jpeg', 'png', 'gif']:
-                # Las imágenes se pueden mostrar directamente
-                return render_template('document_viewer.html', 
-                                      doc_url=temp_link.link,
-                                      doc_title=file_id.split('/')[-1],
-                                      doc_type='image')
-            elif file_extension in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']:
-                # Para documentos de Office, usamos el visor de Office Online o Google Docs
-                office_url = f"https://view.officeapps.live.com/op/view.aspx?src={temp_link.link}"
-                return redirect(office_url)
-            else:
-                # Para otros tipos de archivos, redirigir al enlace directo
-                return redirect(temp_link.link)
-                
+            return redirect(temp_link.link)
     except Exception as e:
-        print(f"Error visualizando documento {file_id}: {e}")
-        flash(f'Error al visualizar el documento: {e}', 'error')
-        return redirect(url_for('index'))
+        print(f"Error obteniendo enlace para {file_id}: {e}")
+        flash(f'Error al obtener el documento: {e}', 'error')
         
-    flash('Documento no encontrado', 'error')
     return redirect(url_for('index'))
-    
-    # Redireccionar al enlace de vista previa
-    return redirect(doc['url'])
-    
+
 @app.route('/get_document_url/<path:file_id>')
 def get_document_url(file_id):
     if 'user' not in session:
@@ -280,8 +251,7 @@ def get_document_url(file_id):
     try:
         dbx = get_dropbox_client()
         if dbx:
-            # Intentar obtener un enlace con tiempo de expiración más largo
-            # (15 minutos en lugar del valor predeterminado de 4 horas)
+            # Obtener el enlace temporal
             temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
             
             # Registra la URL para depuración
@@ -297,7 +267,7 @@ def get_document_url(file_id):
         return jsonify({"success": False, "error": str(e)}), 500
         
     return jsonify({"success": False, "error": "Documento no encontrado"}), 404
-    
+
 @app.route('/view_pdf/<path:file_id>')
 def view_pdf(file_id):
     if 'user' not in session:
@@ -342,8 +312,8 @@ def view_pdf(file_id):
         print(f"Error al visualizar PDF {file_id}: {e}")
         
     flash('No se pudo visualizar el documento PDF', 'error')
-    return redirect(url_for('index')) 
-    
+    return redirect(url_for('index'))
+
 # Para asegurar que la aplicación pueda ejecutarse en Render
 if __name__ == "__main__":
     # Determina el puerto desde la variable de entorno (Render lo proporciona)
