@@ -98,34 +98,12 @@
     </header>
     
     <!-- Reemplaza la sección de user-info con esto -->
-<div class="user-container">
-    <div class="user-info">
-        {% if session.user %}
-        <div class="user-email">
-            <span class="user-email-text">{{ session.user }}</span>
-            <a href="{{ url_for('logout') }}" class="btn-logout" title="Cerrar sesión">
-                <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
-                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-                </svg>
-            </a>
-        </div>
-        {% endif %}
-    </div>
-</div>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    
+<!-- Estructura general después de header y antes de modal -->
+<div class="content-wrapper">
+    <!-- Contenedor de carga y búsqueda -->
     <div class="upload-search-container">
-        <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" id="fileInput">
+        <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <input type="file" name="file" id="fileInput" onchange="autoSubmitOnMobile()">
             <label for="fileInput" class="upload-btn">Seleccionar Documento</label>
             <button type="submit" class="submit-btn">Subir</button>
         </form>
@@ -135,28 +113,48 @@
             </div>
         </div>
     </div>
-    
-    <section class="recent-docs">
+
+    <!-- Sección de documentos recientes -->
+    <div class="recent-docs">
         <h2>DOCUMENTOS RECIENTES</h2>
-        <div class="doc-list" id="documentsList">
-    {% if dropbox_files %}
-        {% for doc in dropbox_files %}
-        <div class="doc-card">
-            <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
-            <div class="doc-card-content">
-                <h3>{{ doc.title }}</h3>
-                <div class="doc-actions">
-                    <a href="#" class="btn btn-primary" onclick="viewDocument('{{ doc.file_id }}', '{{ doc.title }}'); return false;">Ver documento</a>
-                    <a href="{{ doc.url }}" class="btn download-btn" download>Descargar</a>
-                </div>
+        <div class="doc-list-wrapper">
+            <div class="doc-list" id="documentsList">
+                {% if dropbox_files %}
+                    {% for doc in dropbox_files %}
+                    <div class="doc-card">
+                        <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
+                        <div class="doc-card-content">
+                            <h3>{{ doc.title }}</h3>
+                            <div class="doc-actions">
+                                <a href="#" class="btn btn-primary" onclick="viewDocument('{{ doc.file_id }}', '{{ doc.title }}'); return false;">Ver documento</a>
+                                <a href="{{ doc.url }}" class="btn download-btn" download>Descargar</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-docs">No hay documentos disponibles.</p>
+                {% endif %}
             </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <p class="no-docs">No hay documentos disponibles.</p>
-    {% endif %}
+    </div>
+    
+    <!-- Contenedor de información de usuario -->
+    <div class="user-container">
+        <div class="user-info">
+            {% if session.user %}
+            <div class="user-email">
+                <span class="user-email-text">{{ session.user }}</span>
+                <a href="{{ url_for('logout') }}" class="btn-logout" title="Cerrar sesión">
+                    <svg class="logout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+                        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                    </svg>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
-    </section>
     
     <!-- Modal para visualizar documentos -->
     <div id="documentModal" class="modal">
@@ -375,6 +373,14 @@
                 closeModal();
             }
         }
+
+        // Función para subir automáticamente cuando se selecciona un archivo en móvil
+    function autoSubmitOnMobile() {
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // Solo en dispositivos móviles
+            document.getElementById('uploadForm').submit();
+        }
+    }
     </script>
 </body>
 </html>
