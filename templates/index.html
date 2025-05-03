@@ -130,21 +130,23 @@
     <section class="recent-docs">
         <h2>DOCUMENTOS RECIENTES</h2>
         <div class="doc-list" id="documentsList">
-            {% if dropbox_files %}
-                {% for doc in dropbox_files %}
-                <div class="doc-card">
-                    <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
-                    <h3>{{ doc.title }}</h3>
-                    <div class="doc-actions">
-                        <a href="#" class="btn btn-primary" onclick="viewDocument('{{ doc.file_id }}', '{{ doc.title }}'); return false;">Ver documento</a>
-                        <a href="{{ doc.url }}" class="btn download-btn" download>Descargar</a>
-                    </div>
+    {% if dropbox_files %}
+        {% for doc in dropbox_files %}
+        <div class="doc-card">
+            <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
+            <div class="doc-card-content">
+                <h3>{{ doc.title }}</h3>
+                <div class="doc-actions">
+                    <a href="#" class="btn btn-primary" onclick="viewDocument('{{ doc.file_id }}', '{{ doc.title }}'); return false;">Ver documento</a>
+                    <a href="{{ doc.url }}" class="btn download-btn" download>Descargar</a>
                 </div>
-                {% endfor %}
-            {% else %}
-                <p class="no-docs">No hay documentos disponibles.</p>
-            {% endif %}
+            </div>
         </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-docs">No hay documentos disponibles.</p>
+    {% endif %}
+</div>
     </section>
     
     <!-- Modal para visualizar documentos -->
