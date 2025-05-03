@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Visor de Documento</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    {% if file_ext == 'pdf' %}
+        <!-- Visor PDF directo -->
+        <iframe src="{{ file_url }}"></iframe>
+    
+    {% elif file_ext in ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'] %}
+        <!-- Visor de Google Docs -->
+        <iframe src="https://docs.google.com/gview?url={{ file_url }}&embedded=true"></iframe>
+
+    {% else %}
+        <p>No se puede visualizar este tipo de archivo.</p>
+    {% endif %}
+</body>
+</html>
