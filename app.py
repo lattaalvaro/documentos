@@ -298,6 +298,52 @@ def get_document_url(file_id):
         
     return jsonify({"success": False, "error": "Documento no encontrado"}), 404
     
+@app.route('/view_pdf/<path:file_id>')
+def view_pdf(file_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+        
+    # Normalizar el path del archivo
+    if file_id.startswith('/'):
+        file_id = file_id[1:]
+    if not file_id.startswith('archivossubidos/'):
+        file_id = 'archivossubidos/' + file_id
+    
+    dropbox_path = '/' + file_id
+    
+    try:
+        dbx = get_dropbox_client()
+        if dbx:
+            # Obtener metadata del archivo para verificar que es un PDF
+            metadata = dbx.files_get_metadata(dropbox_path.lower())
+            
+            if metadata.name.lower().endswith('.pdf'):
+                # Obtener enlace temporal para el PDF
+                temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
+                
+                # Crea un HTML que muestra el PDF en un iframe y lo devuelve directamente
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Visor de PDF - {metadata.name}</title>
+                    <style>
+                        body, html {{ margin: 0; padding: 0; height: 100%; }}
+                        iframe {{ width: 100%; height: 100%; border: none; }}
+                    </style>
+                </head>
+                <body>
+                    <iframe src="{temp_link.link}" frameborder="0"></iframe>
+                </body>
+                </html>
+                """
+                return html_content
+    except Exception as e:
+        print(f"Error al visualizar PDF {file_id}: {e}")
+        
+    flash('No se pudo visualizar el documento PDF', 'error')
+    return redirect(url_for('index')) 
+    
 # Para asegurar que la aplicación pueda ejecutarse en Render
 if __name__ == "__main__":
     # Determina el puerto desde la variable de entorno (Render lo proporciona)
