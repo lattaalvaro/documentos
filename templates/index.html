@@ -51,7 +51,7 @@
                     <img src="{{ url_for('static', filename='images/doc_icon.png') }}" alt="Icono Documento">
                     <h3>{{ doc.title }}</h3>
                     <div class="doc-actions">
-                        <a href="{{ url_for('preview', file_id=doc.file_id) }}" class="btn view-btn" target="_blank">Ver documento</a>
+                        <a href="{{ url_for('preview', file_id=file['file_id']) }}" class="btn btn-primary">Ver documento</a>
                         <a href="{{ doc.url }}" class="btn download-btn" download>Descargar</a>
                     </div>
                 </div>
