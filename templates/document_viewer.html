@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ doc_title }} - Visor de documentos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .viewer-container {
+            width: 100%;
+            height: 85vh;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .pdf-viewer, .image-viewer {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ccc;
+        }
+        
+        .back-button {
+            margin: 10px 0;
+            padding: 8px 15px;
+            background-color: #4a566b;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        
+        .back-button:hover {
+            background-color: #3a465b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Militar" class="logo">
+        <h1>CENTRO MILITAR<br>DE DOCUMENTOS</h1>
+    </header>
+    
+    <div class="user-info">
+        {% if session.user %}
+        <p>Usuario: {{ session.user }}</p>
+        <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar sesión</a>
+        {% endif %}
+    </div>
+    
+    <div class="viewer-container">
+        <a href="{{ url_for('index') }}" class="back-button">← Volver a documentos</a>
+        <h2>{{ doc_title }}</h2>
+        
+        {% if doc_type == 'pdf' %}
+            <iframe src="{{ doc_url }}" class="pdf-viewer"></iframe>
+        {% elif doc_type == 'image' %}
+            <img src="{{ doc_url }}" alt="{{ doc_title }}" class="image-viewer">
+        {% endif %}
+        
+        <div class="download-container">
+            <a href="{{ doc_url }}" class="btn download-btn" download>Descargar documento</a>
+        </div>
+    </div>
+</body>
+</html>
