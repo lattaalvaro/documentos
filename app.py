@@ -1,27 +1,5 @@
 import os
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from werkzeug.utils import secure_filename
-from boxsdk import OAuth2, Client
-
-app = Flask(__name__)
-app.secret_key = 'super_secret_key'
-
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Firebase
-FIREBASE_URL = 'https://military-docs-b008c-default-rtdb.firebaseio.com/usuarios.json'
-
-# Box credentials
-CLIENT_ID = 'xmwe4k8mabm488z87nj07cyqtc4wtplt'
-CLIENT_SECRET = 'Az8Zyr85ehEXe5HgkNa7kXgM3I82iZKL'
-REDIRECT_URI = 'https://documentosmilitares.onrender.com/callback'
-
-box_oauth = OAuth2(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-import os
-import requests
 import tempfile
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from werkzeug.utils import secure_filename
