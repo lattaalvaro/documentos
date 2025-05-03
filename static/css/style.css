@@ -7,7 +7,7 @@
 }
 
 body {
-    background-color: #708238; /* Verde muy claro para el fondo del body */
+    background-color: #EEF1E6; /* Verde muy claro para el fondo del body */
     color: #333;
 }
 
@@ -210,7 +210,7 @@ header h1 {
 }
 
 .doc-card {
-    background-color: #f9f9f9;
+    background-color: rgba(232, 236, 214, 0.6); /* Semi-transparente que combina con la página */
     border-radius: 8px;
     padding: 1rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -388,6 +388,50 @@ header h1 {
         font-size: 1.4rem;
     }
     
+    /* Reorganización de contenedores para móvil */
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Mover el contenedor de usuario debajo de documentos recientes */
+    .user-container {
+        order: 2;
+    }
+    
+    .recent-docs {
+        order: 1;
+    }
+    
+    .upload-search-container {
+        order: 0;
+    }
+    
+    /* Crear scroll horizontal para documentos en móvil */
+    .doc-list-wrapper {
+        overflow-x: auto;
+        padding-bottom: 1rem; /* Espacio para la barra de scroll */
+        margin-bottom: 0.5rem;
+    }
+    
+    .doc-list {
+        display: flex; /* Cambiar a flexbox para scroll horizontal */
+        grid-template-columns: unset; /* Eliminar grid */
+        gap: 1rem;
+        width: max-content; /* Permitir que crezca según el contenido */
+        padding: 0.5rem;
+    }
+    
+    .doc-card {
+        width: 150px; /* Ancho fijo para cada tarjeta */
+        flex-shrink: 0; /* Evitar que se compriman */
+        height: 200px; /* Un poco más compacto en móvil */
+    }
+    
+    .doc-card h3 {
+        font-size: 0.8rem;
+    }
+    
     /* Cambios en la barra de carga/búsqueda */
     .upload-search-container {
         flex-direction: row; /* Mantener horizontal */
@@ -397,9 +441,14 @@ header h1 {
         gap: 10px;
     }
     
-    /* Ocultar el botón de subir en móvil */
+    /* Ocultar el botón de subir en móvil y ajustar comportamiento */
     .submit-btn {
         display: none;
+    }
+    
+    /* Hacer que al seleccionar un archivo se suba automáticamente */
+    #fileInput:not(:placeholder-shown) ~ .auto-submit-wrapper {
+        display: block;
     }
     
     .upload-form, .search-container {
@@ -422,19 +471,6 @@ header h1 {
     .search-box input {
         width: 100%;
         padding: 8px;
-    }
-    
-    /* Ajustar la lista de documentos para 2 por fila en móvil */
-    .doc-list {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .doc-card {
-        height: 200px; /* Un poco más compacto en móvil */
-    }
-    
-    .doc-card h3 {
-        font-size: 0.8rem;
     }
     
     /* Ajustes para el modal en móvil */
