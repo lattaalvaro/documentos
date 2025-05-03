@@ -10,14 +10,18 @@ import json
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
 
+# Asegúrate de que la carpeta de subidas exista
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Firebase
 FIREBASE_URL = 'https://military-docs-b008c-default-rtdb.firebaseio.com/usuarios.json'
 
-# Dropbox credentials
+# Dropbox credentials - Deberías usar un token de acceso permanente
 DROPBOX_ACCESS_TOKEN = 'sl.u.AFs_RytDK-ZykfudBJrJbr0uHh3qnan4aFKKt9yychhGz61DccSMMN9vuADBM8yyWENHIJM2F2FmWIII5FKwdzSHoxo-vI2JRQ4z54tJvry30ifLJ3rUQrsgw5KTssAO1oJOmRtlXvvmmuSuuI8zTDIVFAWLcrRAMaBKCgSy3bPbL3YDc8rmzrFN4SMbGM4vi_0sNQKUEVOm-hmO3WuoKUiS1hL_KEXih4BoIIZlXC2LzUEVf_3WmvKS23-wX2vX9OnnOt9Roc_IRO_3P55GmNg2WzgKW_a7OZctFtaT5q4yAT89c2uwc-f5WsOuq5h6U1E3VCvAfgIDUM_l92FdPKk1cfNEXIUtDD40U5ni8MaoFjt9maH68pzeT_5vOqHXMBGlo-s4ANLtrEe_Vth71OASaZ_CG9-5241ZWOeTKwf4SgRvqigi32_wFszuQ_nY8oMjQjvKfy5YA3lxNqGNJ444bKH2ZZ8fHeGethZW79K6D4aQKk3SLokhqKagozSuKN0GCOB1AhnjTmR-1eHzxBLdXZfLdAp6e0E9JJXlbybItRAja8-L6RwVFCOKV_qhVCruZojAE2n1CmTdfr29rqun1FWNeAyVmBOCmBaIrplQUU0Qzk7qG65w9QLJNZg-Rs7o1upiwQ7EIr7qWp0izvpWIKik0qcDByKqKR1aTxUv0dXelt_5r6Uvww7B55lgW5ED1-F1pG696Sil3gkE7f1FwN2hVwD7ZSbdo1Y91BhhRMrIdrO4s31sEk8vfy4FteijhOTn2d7UWnvejH7soyGL4WLV1aVmU25L2z4dfm48RP9dyohOcEn_tsb_4L99hSp71j47w4oN58XTvrE9UEE5F_IBi-OJfs4Nh5sXUK4MpbykRRGN6xQrB9nbM4x6z1lRv1oY-Nw9zOy5615iLKR8BZANwARSy-kdZmTGzbiC0VaaO47gIp81elBzqn3TnTQM6LXy4Nd_lHABAGP5cn5ps-RajwtK-AaeOy5svMmWTd1DByxgrigrVGwS8az7dWEUDaYyET6l8eSOfjMNdJ6vhg5ab3EXpTO-RWEhF_Y3YTJlXLrPZaszQ5k5jzlU-mFRUGDLHPtyFOST2uvKzd-kUBJvSQnvRCioU1JJJ-tXN-_ZvUl3WyVmG4UPqGwvV8ZR0tGiiSNgrkKgarv4g8xAp64uoL3lLXa-287WEQL1OsUeWf_9tXdSUoGQfFbwAIp6Tkw0zxLDStt9heEEhe54SdrXepYFo1sDpJKrvKqhYID-7yPtiQyo_YLed9Os_uy43bzaii8l3vKv4TFyPfRrdThZXoOp8xeCjxWv_9qnisDNcxbv8I-N512u2mH_nJ-e436LO_FgfrlE6KHbL0El6MUuAfLpxDWTtggXyn_-WXWFKVqdPuxdBojTHp9okOlk0nB0q1a1joYJxH1dxtkF'
 
 os.environ['DROPBOX_API_DISABLE_GRPC'] = 'True'
@@ -26,16 +30,24 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_users_firebase():
-    response = requests.get(FIREBASE_URL)
-    if response.status_code == 200 and response.json() is not None:
-        return response.json()
-    else:
+    try:
+        response = requests.get(FIREBASE_URL)
+        if response.status_code == 200 and response.json() is not None:
+            return response.json()
+        else:
+            return {}
+    except Exception as e:
+        print(f"Error obteniendo usuarios de Firebase: {e}")
         return {}
 
 def save_user_firebase(email):
-    user_data = {"email": email}
-    response = requests.post(FIREBASE_URL[:-5] + '.json', json=user_data)
-    return response.status_code == 200
+    try:
+        user_data = {"email": email}
+        response = requests.post(FIREBASE_URL[:-5] + '.json', json=user_data)
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error guardando usuario en Firebase: {e}")
+        return False
 
 def get_dropbox_client():
     try:
@@ -47,10 +59,10 @@ def get_dropbox_client():
         dbx.users_get_current_account()
         return dbx
     except AuthError as e:
-        flash(f"Error de autenticación con Dropbox: {e}", 'error')
+        print(f"Error de autenticación con Dropbox: {e}")
         return None
     except Exception as e:
-        flash(f"Error al conectar con Dropbox: {e}", 'error')
+        print(f"Error al conectar con Dropbox: {e}")
         return None
 
 def get_or_create_dropbox_folder(folder_name):
@@ -67,6 +79,32 @@ def get_or_create_dropbox_folder(folder_name):
     except Exception as e:
         print(f"Error creando/obteniendo carpeta en Dropbox: {e}")
         return None
+
+def get_dropbox_files():
+    """Función para obtener los archivos de Dropbox"""
+    dropbox_files = []
+    dbx = get_dropbox_client()
+    
+    if dbx:
+        try:
+            folder_metadata = get_or_create_dropbox_folder("ArchivosSubidos")
+            if folder_metadata:
+                result = dbx.files_list_folder('/ArchivosSubidos')
+                for entry in result.entries:
+                    if isinstance(entry, dropbox.files.FileMetadata):
+                        try:
+                            temp_link = dbx.files_get_temporary_link(entry.path_lower)
+                            dropbox_files.append({
+                                'title': entry.name,
+                                'file_id': entry.path_lower,
+                                'url': temp_link.link
+                            })
+                        except Exception as e:
+                            print(f"Error obteniendo enlace para {entry.name}: {e}")
+        except Exception as e:
+            print(f"Error accediendo a Dropbox: {e}")
+    
+    return dropbox_files
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -115,28 +153,7 @@ def index():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    dropbox_files = []
-    dbx = get_dropbox_client()
-    
-    if dbx:
-        try:
-            folder_metadata = get_or_create_dropbox_folder("ArchivosSubidos")
-            if folder_metadata:
-                result = dbx.files_list_folder('/ArchivosSubidos')
-                for entry in result.entries:
-                    if isinstance(entry, dropbox.files.FileMetadata):
-                        try:
-                            temp_link = dbx.files_get_temporary_link(entry.path_lower)
-                            dropbox_files.append({
-                                'title': entry.name,
-                                'file_id': entry.path_lower,
-                                'url': temp_link.link
-                            })
-                        except Exception as e:
-                            print(f"Error obteniendo enlace para {entry.name}: {e}")
-        except Exception as e:
-            flash(f"Error accediendo a Dropbox: {e}", 'error')
-
+    dropbox_files = get_dropbox_files()
     return render_template('index.html', dropbox_files=dropbox_files)
 
 @app.route('/upload', methods=['POST'])
@@ -153,8 +170,9 @@ def upload():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
+        # Asegúrate de que la carpeta de subidas exista
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
-            os.makedirs(app.config['UPLOAD_FOLDER'])
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             
         file.save(filepath)
         
@@ -173,6 +191,12 @@ def upload():
                         mode=dropbox.files.WriteMode.overwrite
                     )
                     
+                    # Limpiar el archivo local después de subirlo
+                    try:
+                        os.remove(filepath)
+                    except:
+                        pass
+                    
                     flash('Archivo subido correctamente a Dropbox', 'success')
                 else:
                     flash('No se pudo crear la carpeta en Dropbox', 'error')
@@ -188,12 +212,23 @@ def upload():
 
 @app.route('/preview/<file_id>')
 def preview(file_id):
-    # Aquí puedes obtener el documento según el file_id
+    if 'user' not in session:
+        return redirect(url_for('login'))
+        
+    # Obtener los archivos de Dropbox nuevamente
+    dropbox_files = get_dropbox_files()
     doc = next((doc for doc in dropbox_files if doc['file_id'] == file_id), None)
+    
     if doc is None:
         flash('Documento no encontrado', 'error')
         return redirect(url_for('index'))
-    return render_template('index.html', doc=doc)
+    
+    # Redireccionar al enlace de vista previa
+    return redirect(doc['url'])
 
+# Para asegurar que la aplicación pueda ejecutarse en Render
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Determina el puerto desde la variable de entorno (Render lo proporciona)
+    port = int(os.environ.get('PORT', 5000))
+    # En producción, evita usar debug=True
+    app.run(host='0.0.0.0', port=port)
