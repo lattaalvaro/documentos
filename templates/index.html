@@ -24,10 +24,11 @@
             margin: 2% auto;
             padding: 20px;
             border: 1px solid #888;
-            width: 90%;
+            width: 95%; /* Aumentado para móviles */
             height: 85%;
             border-radius: 8px;
             position: relative;
+            max-width: 1200px; /* Máximo ancho en pantallas grandes */
         }
         
         .close-modal {
@@ -38,6 +39,7 @@
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
+            z-index: 1010; /* Asegurar que esté por encima del iframe */
         }
         
         .close-modal:hover {
@@ -48,16 +50,44 @@
             width: 100%;
             height: 90%;
             border: none;
+            overflow: hidden; /* Evitar scrollbars dentro del iframe */
         }
         
         .modal-title {
             margin-top: 0;
             padding-right: 30px; /* Espacio para el botón de cerrar */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .modal-actions {
             margin-top: 10px;
             text-align: right;
+        }
+        
+        /* Ajustes para dispositivos móviles */
+        @media screen and (max-width: 768px) {
+            .modal-content {
+                width: 98%;
+                height: 90%;
+                padding: 15px;
+                margin: 1% auto;
+            }
+            
+            .document-iframe {
+                height: 85%;
+            }
+            
+            .modal-title {
+                font-size: 16px;
+            }
+            
+            .close-modal {
+                top: 5px;
+                right: 10px;
+                font-size: 24px;
+            }
         }
     </style>
 </head>
@@ -165,157 +195,162 @@
         });
         
         // Funciones para el modal
-function viewDocument(fileId, title) {
-    // Obtener el iframe y establecer su src
-    const iframe = document.getElementById('documentFrame');
-    const fileExtension = title.split('.').pop().toLowerCase();
-    
-    // Limpiar iframe anterior
-    iframe.src = '';
-    
-    // Establecer título del modal
-    document.getElementById('modalTitle').textContent = title;
-    
-    // Detectar si es un dispositivo móvil
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Mostrar el modal primero (para evitar problemas de carga)
-    document.getElementById('documentModal').style.display = 'block';
-    
-    // Obtener la URL del documento y configurar el modal
-    fetch(`/get_document_url/${fileId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Configurar el enlace de descarga
-                document.getElementById('downloadLink').href = data.url;
-                
-                // Configurar el iframe según el tipo de documento
-                // Dentro de la función viewDocument, añade esto en la sección de PDFs:
-if (['pdf'].includes(fileExtension)) {
-    // Configurar el botón de vista alternativa para PDFs
-    const viewPdfBtn = document.getElementById('viewPdfInNewTab');
-    viewPdfBtn.style.display = 'inline-block';
-    viewPdfBtn.href = `/view_pdf/${fileId}`;
-} else {
-    // Ocultar el botón para otros tipos de archivos
-    document.getElementById('viewPdfInNewTab').style.display = 'none';
-}
-                    // Usar Google PDF Viewer para todos los dispositivos para mejorar compatibilidad
-                    const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
-                    iframe.src = pdfViewerUrl;
-                    
-                    // Fallback por si Google Viewer falla
-                    iframe.onerror = function() {
-                        // Intentar con PDF.js (incluido en muchos navegadores modernos)
-                        iframe.src = `about:blank`;
-                        iframe.onload = function() {
-                            iframe.contentWindow.document.write(`
+        function viewDocument(fileId, title) {
+            // Obtener el iframe y establecer su src
+            const iframe = document.getElementById('documentFrame');
+            const fileExtension = title.split('.').pop().toLowerCase();
+            
+            // Limpiar iframe anterior
+            iframe.src = '';
+            
+            // Establecer título del modal
+            document.getElementById('modalTitle').textContent = title;
+            
+            // Detectar si es un dispositivo móvil
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Mostrar el modal primero (para evitar problemas de carga)
+            document.getElementById('documentModal').style.display = 'block';
+            
+            // Obtener la URL del documento y configurar el modal
+            fetch(`/get_document_url/${fileId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Configurar el enlace de descarga
+                        document.getElementById('downloadLink').href = data.url;
+                        
+                        // Configurar el iframe según el tipo de documento
+                        if (['pdf'].includes(fileExtension)) {
+                            // Usar Google PDF Viewer para todos los dispositivos para mejorar compatibilidad
+                            const pdfViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
+                            iframe.src = pdfViewerUrl;
+                            
+                            // Configurar el botón de vista alternativa para PDFs
+                            const viewPdfBtn = document.getElementById('viewPdfInNewTab');
+                            viewPdfBtn.style.display = 'inline-block';
+                            viewPdfBtn.href = `/view_pdf/${fileId}`;
+                            
+                            // Fallback por si Google Viewer falla
+                            iframe.onerror = function() {
+                                // Intentar con PDF.js (incluido en muchos navegadores modernos)
+                                iframe.src = `about:blank`;
+                                iframe.onload = function() {
+                                    iframe.contentWindow.document.write(`
+                                        <html>
+                                            <head>
+                                                <title>Visor PDF</title>
+                                                <style>
+                                                    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                                                    #pdf-container { width: 100%; height: 100%; }
+                                                    .message { font-family: Arial; text-align: center; margin-top: 100px; }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                <div id="pdf-container">
+                                                    <embed src="${data.url}" type="application/pdf" width="100%" height="100%">
+                                                    <p class="message">Si el documento no se visualiza correctamente, 
+                                                        <a href="${data.url}" target="_blank">haga clic aquí para abrirlo en una nueva pestaña</a> 
+                                                        o use el botón de descarga.</p>
+                                                </div>
+                                            </body>
+                                        </html>
+                                    `);
+                                };
+                            };
+                        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                            // Ocultar el botón para otros tipos de archivos
+                            document.getElementById('viewPdfInNewTab').style.display = 'none';
+                            
+                            // Imágenes - crear HTML responsive para mostrarlas
+                            iframe.src = `data:text/html;charset=utf-8,
                                 <html>
                                     <head>
-                                        <title>Visor PDF</title>
+                                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
                                         <style>
-                                            body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                                            #pdf-container { width: 100%; height: 100%; }
-                                            .message { font-family: Arial; text-align: center; margin-top: 100px; }
+                                            body { 
+                                                margin: 0; 
+                                                display: flex; 
+                                                justify-content: center; 
+                                                align-items: center; 
+                                                height: 100vh; 
+                                                overflow: auto;
+                                            }
+                                            img { 
+                                                max-width: 100%; 
+                                                max-height: 100%; 
+                                                object-fit: contain; 
+                                            }
+                                        </style>
+                                    </head>
+                                    <body><img src="${data.url}" alt="${title}"></body>
+                                </html>`;
+                        } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension)) {
+                            // Ocultar el botón para otros tipos de archivos
+                            document.getElementById('viewPdfInNewTab').style.display = 'none';
+                            
+                            // Documentos Office - usar Google Docs Viewer en móviles por mejor compatibilidad
+                            if (isMobile) {
+                                iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
+                            } else {
+                                iframe.src = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(data.url)}`;
+                            }
+                        } else {
+                            // Ocultar el botón para otros tipos de archivos
+                            document.getElementById('viewPdfInNewTab').style.display = 'none';
+                            
+                            // Otros archivos - mostrar mensaje adaptado
+                            iframe.src = `data:text/html;charset=utf-8,
+                                <html>
+                                    <head>
+                                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                        <style>
+                                            body { 
+                                                font-family: Arial, sans-serif; 
+                                                display: flex; 
+                                                justify-content: center; 
+                                                align-items: center; 
+                                                height: 100vh; 
+                                                text-align: center;
+                                                padding: 20px;
+                                                margin: 0;
+                                            }
+                                            div {
+                                                max-width: 90%;
+                                            }
+                                            h1 {
+                                                font-size: 24px;
+                                            }
+                                            @media (max-width: 768px) {
+                                                h1 {
+                                                    font-size: 20px;
+                                                }
+                                                p {
+                                                    font-size: 14px;
+                                                }
+                                            }
                                         </style>
                                     </head>
                                     <body>
-                                        <div id="pdf-container">
-                                            <embed src="${data.url}" type="application/pdf" width="100%" height="100%">
-                                            <p class="message">Si el documento no se visualiza correctamente, 
-                                                <a href="${data.url}" target="_blank">haga clic aquí para abrirlo en una nueva pestaña</a> 
-                                                o use el botón de descarga.</p>
+                                        <div>
+                                            <h1>Previsualización no disponible</h1>
+                                            <p>Este tipo de archivo no puede ser visualizado directamente.</p>
+                                            <p>Utilice el botón "Descargar" para abrir el archivo.</p>
                                         </div>
                                     </body>
-                                </html>
-                            `);
-                        };
-                    };
-                } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-                    // Imágenes - crear HTML responsive para mostrarlas
-                    iframe.src = `data:text/html;charset=utf-8,
-                        <html>
-                            <head>
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <style>
-                                    body { 
-                                        margin: 0; 
-                                        display: flex; 
-                                        justify-content: center; 
-                                        align-items: center; 
-                                        height: 100vh; 
-                                        overflow: auto;
-                                    }
-                                    img { 
-                                        max-width: 100%; 
-                                        max-height: 100%; 
-                                        object-fit: contain; 
-                                    }
-                                </style>
-                            </head>
-                            <body><img src="${data.url}" alt="${title}"></body>
-                        </html>`;
-                } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension)) {
-                    // Documentos Office - usar Google Docs Viewer en móviles por mejor compatibilidad
-                    if (isMobile) {
-                        iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
+                                </html>`;
+                        }
                     } else {
-                        iframe.src = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(data.url)}`;
+                        closeModal();
+                        alert('Error al cargar el documento: ' + (data.error || 'Error desconocido'));
                     }
-                } else {
-                    // Otros archivos - mostrar mensaje adaptado
-                    iframe.src = `data:text/html;charset=utf-8,
-                        <html>
-                            <head>
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <style>
-                                    body { 
-                                        font-family: Arial, sans-serif; 
-                                        display: flex; 
-                                        justify-content: center; 
-                                        align-items: center; 
-                                        height: 100vh; 
-                                        text-align: center;
-                                        padding: 20px;
-                                        margin: 0;
-                                    }
-                                    div {
-                                        max-width: 90%;
-                                    }
-                                    h1 {
-                                        font-size: 24px;
-                                    }
-                                    @media (max-width: 768px) {
-                                        h1 {
-                                            font-size: 20px;
-                                        }
-                                        p {
-                                            font-size: 14px;
-                                        }
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                <div>
-                                    <h1>Previsualización no disponible</h1>
-                                    <p>Este tipo de archivo no puede ser visualizado directamente.</p>
-                                    <p>Utilice el botón "Descargar" para abrir el archivo.</p>
-                                </div>
-                            </body>
-                        </html>`;
-                }
-            } else {
-                closeModal();
-                alert('Error al cargar el documento: ' + (data.error || 'Error desconocido'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            closeModal();
-            alert('Error al procesar la solicitud: ' + error);
-        });
-}
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    closeModal();
+                    alert('Error al procesar la solicitud: ' + error);
+                });
+        }
         
         function closeModal() {
             document.getElementById('documentModal').style.display = 'none';
