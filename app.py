@@ -1,7 +1,7 @@
 import os
 import requests
 import tempfile
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 from werkzeug.utils import secure_filename
 import dropbox
 from dropbox.exceptions import AuthError
@@ -263,7 +263,36 @@ def preview(file_id):
     
     # Redireccionar al enlace de vista previa
     return redirect(doc['url'])
-
+    
+@app.route('/get_document_url/<path:file_id>')
+def get_document_url(file_id):
+    if 'user' not in session:
+        return jsonify({"success": False, "error": "No autorizado"}), 401
+        
+    # Normalizar el path del archivo
+    if file_id.startswith('/'):
+        file_id = file_id[1:]
+    if not file_id.startswith('archivossubidos/'):
+        file_id = 'archivossubidos/' + file_id
+    
+    dropbox_path = '/' + file_id
+    
+    try:
+        dbx = get_dropbox_client()
+        if dbx:
+            # Obtener el enlace temporal
+            temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
+            return jsonify({
+                "success": True,
+                "url": temp_link.link,
+                "filename": file_id.split('/')[-1]
+            })
+    except Exception as e:
+        print(f"Error obteniendo URL del documento {file_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+        
+    return jsonify({"success": False, "error": "Documento no encontrado"}), 404
+    
 # Para asegurar que la aplicación pueda ejecutarse en Render
 if __name__ == "__main__":
     # Determina el puerto desde la variable de entorno (Render lo proporciona)
