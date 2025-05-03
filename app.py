@@ -206,23 +206,15 @@ def upload():
 
     return redirect(url_for('index'))
 
-@app.route('/preview/<path:file_id>')
+@app.route('/preview/<file_id>')
 def preview(file_id):
-    if 'user' not in session:
-        return redirect(url_for('login'))
-        
-    dbx = get_dropbox_client()
-    if not dbx:
-        flash('Error conectando con Dropbox', 'error')
-        return redirect(url_for('index'))
-        
-    try:
-        # Obtener el enlace temporal para previsualización
-        temp_link = dbx.files_get_temporary_link(file_id)
-        return redirect(temp_link.link)
-    except Exception as e:
-        flash(f"Error al obtener el archivo: {e}", 'error')
-        return redirect(url_for('index'))
+    for doc in dropbox_files:
+        if doc['file_id'] == file_id:
+            file_url = doc['url']
+            file_name = file_url.split('/')[-1]
+            file_ext = file_name.split('.')[-1].lower()
+            return render_template('preview.html', file_url=file_url, file_ext=file_ext)
+    return "Archivo no encontrado", 404
 
 if __name__ == '__main__':
     # Asegurarse de que la carpeta de subidas exista
