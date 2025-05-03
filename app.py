@@ -210,18 +210,39 @@ def upload():
         flash('Tipo de archivo no permitido', 'error')
         return redirect(url_for('index'))
 
-@app.route('/preview/<file_id>')
+@app.route('/preview/<path:file_id>')
 def preview(file_id):
     if 'user' not in session:
         return redirect(url_for('login'))
         
-    # Obtener los archivos de Dropbox nuevamente
-    dropbox_files = get_dropbox_files()
-    doc = next((doc for doc in dropbox_files if doc['file_id'] == file_id), None)
+    # Verificar si el file_id comienza con una barra 
+    if file_id.startswith('/'):
+        file_id = file_id[1:]  # Remover la barra inicial
     
-    if doc is None:
-        flash('Documento no encontrado', 'error')
-        return redirect(url_for('index'))
+    # Si no comienza con "/ArchivosSubidos", añadirlo
+    if not file_id.startswith('archivossubidos/'):
+        file_id = 'archivossubidos/' + file_id
+    
+    # Añadir la barra inicial para el formato que espera Dropbox
+    dropbox_path = '/' + file_id
+    
+    # Intentar obtener el enlace directamente
+    try:
+        dbx = get_dropbox_client()
+        if dbx:
+            temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
+            return redirect(temp_link.link)
+    except Exception as e:
+        print(f"Error obteniendo enlace para {file_id}: {e}")
+    
+    # Si falla el método directo, intentar buscar en la lista de archivos
+    dropbox_files = get_dropbox_files()
+    for doc in dropbox_files:
+        if doc['file_id'].lower() == dropbox_path.lower():
+            return redirect(doc['url'])
+    
+    flash('Documento no encontrado', 'error')
+    return redirect(url_for('index'))
     
     # Redireccionar al enlace de vista previa
     return redirect(doc['url'])
