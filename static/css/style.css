@@ -7,7 +7,7 @@
 }
 
 body {
-    background-color: #708238; /* Verde muy claro para el fondo del body */
+    background-color: #EEF1E6; /* Verde muy claro para el fondo del body */
     color: #333;
 }
 
@@ -33,13 +33,20 @@ header h1 {
     letter-spacing: 1px;
 }
 
+/* Contenedor de información de usuario - Con bordes redondeados */
+.user-container {
+    background-color: rgba(216, 225, 195, 0.7); /* Verde claro semi-transparente */
+    border-radius: 8px;
+    margin: 1rem;
+    padding: 0.8rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
 /* Información de usuario - Redondeado y con ícono */
 .user-info {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    background-color: #D8E1C3; /* Verde claro para combinar */
-    padding: 0.5rem 1rem;
 }
 
 .user-email {
@@ -110,12 +117,12 @@ header h1 {
     border: 1px solid #faebcc;
 }
 
-/* Contenedor de carga y búsqueda */
+/* Contenedor de carga y búsqueda - Semi-transparente */
 .upload-search-container {
     display: flex;
     justify-content: space-between;
     padding: 1rem;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.7); /* Blanco semi-transparente */
     border-radius: 8px;
     margin: 1rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -175,9 +182,9 @@ header h1 {
     width: 250px;
 }
 
-/* Sección de documentos recientes */
+/* Sección de documentos recientes - Semi-transparente */
 .recent-docs {
-    background-color: #E8ECD6; /* Verde claro que combina con el verde militar */
+    background-color: rgba(232, 236, 214, 0.8); /* Verde claro semi-transparente */
     border-radius: 8px;
     margin: 1rem;
     padding: 1.5rem;
