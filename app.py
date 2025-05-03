@@ -215,32 +215,49 @@ def preview(file_id):
     if 'user' not in session:
         return redirect(url_for('login'))
         
-    # Verificar si el file_id comienza con una barra 
+    # Normalizar el path del archivo
     if file_id.startswith('/'):
-        file_id = file_id[1:]  # Remover la barra inicial
-    
-    # Si no comienza con "/ArchivosSubidos", añadirlo
+        file_id = file_id[1:]
     if not file_id.startswith('archivossubidos/'):
         file_id = 'archivossubidos/' + file_id
     
-    # Añadir la barra inicial para el formato que espera Dropbox
     dropbox_path = '/' + file_id
     
-    # Intentar obtener el enlace directamente
     try:
         dbx = get_dropbox_client()
         if dbx:
+            # Obtener el enlace temporal
             temp_link = dbx.files_get_temporary_link(dropbox_path.lower())
-            return redirect(temp_link.link)
+            
+            # Obtener la extensión del archivo
+            file_extension = file_id.split('.')[-1].lower() if '.' in file_id else ''
+            
+            # Determinar el tipo de visualización basado en la extensión
+            if file_extension in ['pdf']:
+                # Los PDF se pueden mostrar directamente en el navegador
+                return render_template('document_viewer.html', 
+                                      doc_url=temp_link.link,
+                                      doc_title=file_id.split('/')[-1],
+                                      doc_type='pdf')
+            elif file_extension in ['jpg', 'jpeg', 'png', 'gif']:
+                # Las imágenes se pueden mostrar directamente
+                return render_template('document_viewer.html', 
+                                      doc_url=temp_link.link,
+                                      doc_title=file_id.split('/')[-1],
+                                      doc_type='image')
+            elif file_extension in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']:
+                # Para documentos de Office, usamos el visor de Office Online o Google Docs
+                office_url = f"https://view.officeapps.live.com/op/view.aspx?src={temp_link.link}"
+                return redirect(office_url)
+            else:
+                # Para otros tipos de archivos, redirigir al enlace directo
+                return redirect(temp_link.link)
+                
     except Exception as e:
-        print(f"Error obteniendo enlace para {file_id}: {e}")
-    
-    # Si falla el método directo, intentar buscar en la lista de archivos
-    dropbox_files = get_dropbox_files()
-    for doc in dropbox_files:
-        if doc['file_id'].lower() == dropbox_path.lower():
-            return redirect(doc['url'])
-    
+        print(f"Error visualizando documento {file_id}: {e}")
+        flash(f'Error al visualizar el documento: {e}', 'error')
+        return redirect(url_for('index'))
+        
     flash('Documento no encontrado', 'error')
     return redirect(url_for('index'))
     
