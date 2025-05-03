@@ -164,82 +164,121 @@
         });
         
         // Funciones para el modal
-        function viewDocument(fileId, title) {
-            // Obtener el iframe y establecer su src
-            const iframe = document.getElementById('documentFrame');
-            const fileExtension = title.split('.').pop().toLowerCase();
-            
-            // Limpiar iframe anterior
-            iframe.src = '';
-            
-            // Establecer título del modal
-            document.getElementById('modalTitle').textContent = title;
-            
-            // Obtener la URL del documento y configurar el modal
-            fetch(`/get_document_url/${fileId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Configurar el enlace de descarga
-                        document.getElementById('downloadLink').href = data.url;
-                        
-                        // Configurar el iframe según el tipo de documento
-                        if (['pdf'].includes(fileExtension)) {
-                            // PDF directo
-                            iframe.src = data.url;
-                        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-                            // Imágenes - crear HTML para mostrarlas
-                            iframe.src = `data:text/html;charset=utf-8,
-                                <html>
-                                    <head>
-                                        <style>
-                                            body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-                                            img { max-width: 100%; max-height: 100%; object-fit: contain; }
-                                        </style>
-                                    </head>
-                                    <body><img src="${data.url}" alt="${title}"></body>
-                                </html>`;
-                        } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension)) {
-                            // Documentos Office - usar visor de Office Online
-                            iframe.src = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(data.url)}`;
-                        } else {
-                            // Otros archivos - mostrar mensaje
-                            iframe.src = `data:text/html;charset=utf-8,
-                                <html>
-                                    <head>
-                                        <style>
-                                            body { 
-                                                font-family: Arial, sans-serif; 
-                                                display: flex; 
-                                                justify-content: center; 
-                                                align-items: center; 
-                                                height: 100vh; 
-                                                text-align: center;
-                                                padding: 20px;
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div>
-                                            <h1>Previsualización no disponible</h1>
-                                            <p>Este tipo de archivo no puede ser visualizado directamente.</p>
-                                            <p>Utilice el botón "Descargar" para abrir el archivo.</p>
-                                        </div>
-                                    </body>
-                                </html>`;
-                        }
-                        
-                        // Mostrar el modal
-                        document.getElementById('documentModal').style.display = 'block';
+function viewDocument(fileId, title) {
+    // Obtener el iframe y establecer su src
+    const iframe = document.getElementById('documentFrame');
+    const fileExtension = title.split('.').pop().toLowerCase();
+    
+    // Limpiar iframe anterior
+    iframe.src = '';
+    
+    // Establecer título del modal
+    document.getElementById('modalTitle').textContent = title;
+    
+    // Detectar si es un dispositivo móvil
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Obtener la URL del documento y configurar el modal
+    fetch(`/get_document_url/${fileId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Configurar el enlace de descarga
+                document.getElementById('downloadLink').href = data.url;
+                
+                // Configurar el iframe según el tipo de documento
+                if (['pdf'].includes(fileExtension)) {
+                    // PDF directo - para móviles podemos usar Google PDF Viewer para mejor compatibilidad
+                    if (isMobile) {
+                        iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
                     } else {
-                        alert('Error al cargar el documento: ' + (data.error || 'Error desconocido'));
+                        iframe.src = data.url;
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al procesar la solicitud: ' + error);
-                });
-        }
+                } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                    // Imágenes - crear HTML responsive para mostrarlas
+                    iframe.src = `data:text/html;charset=utf-8,
+                        <html>
+                            <head>
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <style>
+                                    body { 
+                                        margin: 0; 
+                                        display: flex; 
+                                        justify-content: center; 
+                                        align-items: center; 
+                                        height: 100vh; 
+                                        overflow: auto;
+                                    }
+                                    img { 
+                                        max-width: 100%; 
+                                        max-height: 100%; 
+                                        object-fit: contain; 
+                                    }
+                                </style>
+                            </head>
+                            <body><img src="${data.url}" alt="${title}"></body>
+                        </html>`;
+                } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension)) {
+                    // Documentos Office - usar Google Docs Viewer en móviles por mejor compatibilidad
+                    if (isMobile) {
+                        iframe.src = `https://docs.google.com/viewer?url=${encodeURIComponent(data.url)}&embedded=true`;
+                    } else {
+                        iframe.src = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(data.url)}`;
+                    }
+                } else {
+                    // Otros archivos - mostrar mensaje adaptado
+                    iframe.src = `data:text/html;charset=utf-8,
+                        <html>
+                            <head>
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <style>
+                                    body { 
+                                        font-family: Arial, sans-serif; 
+                                        display: flex; 
+                                        justify-content: center; 
+                                        align-items: center; 
+                                        height: 100vh; 
+                                        text-align: center;
+                                        padding: 20px;
+                                        margin: 0;
+                                    }
+                                    div {
+                                        max-width: 90%;
+                                    }
+                                    h1 {
+                                        font-size: 24px;
+                                    }
+                                    @media (max-width: 768px) {
+                                        h1 {
+                                            font-size: 20px;
+                                        }
+                                        p {
+                                            font-size: 14px;
+                                        }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div>
+                                    <h1>Previsualización no disponible</h1>
+                                    <p>Este tipo de archivo no puede ser visualizado directamente.</p>
+                                    <p>Utilice el botón "Descargar" para abrir el archivo.</p>
+                                </div>
+                            </body>
+                        </html>`;
+                }
+                
+                // Mostrar el modal
+                document.getElementById('documentModal').style.display = 'block';
+            } else {
+                alert('Error al cargar el documento: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la solicitud: ' + error);
+        });
+}
         
         function closeModal() {
             document.getElementById('documentModal').style.display = 'none';
