@@ -20,6 +20,29 @@ CLIENT_SECRET = 'Az8Zyr85ehEXe5HgkNa7kXgM3I82iZKL'
 REDIRECT_URI = 'https://documentosmilitares.onrender.com/callback'
 
 box_oauth = OAuth2(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+import os
+import requests
+import tempfile
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from werkzeug.utils import secure_filename
+import dropbox
+from dropbox.exceptions import AuthError
+
+app = Flask(__name__)
+app.secret_key = 'super_secret_key'
+
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Firebase
+FIREBASE_URL = 'https://military-docs-b008c-default-rtdb.firebaseio.com/usuarios.json'
+
+# Dropbox credentials
+DROPBOX_ACCESS_TOKEN = 'sl.u.AFu0tr8X9h32v-i4nrNFW9E0eESK76cmqgS1jHEnRsQYcc9UxTWtvcCPVpvPafWWnxhfKch8Z3DRwCf5spsDlfRVrJn23w1XfcQ-wTNl3lMjoTWLsJ_drWRLFTnKAg9Cv-SuMQJh0Fj9KC8abwDBGWH027cdaUxsl_NfBL6f166k1khR6RaFXOlICjrS0HXcZ7XK3VIPTFdmgyM6PcfYH-aODiQQeZJyITtCZua8R4G6mznxVywY2bqcQJQciK7AFDgICwhISCflVPpAL-rcgIXpPdlDJ3txWu9ln_wUdytEo3lZBuyk2jPTqGVz3A4vj8I6ZqSyr1GNSuKJrST9I4lKhokQ1WppJj92qpGcMHl8Za-h9gyioBZPR5F260l6EdAwEwrcmf70qKOQSTvBkc3iuwAC6qGOoIyD8fpSJokfXbvuGvJOLHDPXeMRm_6gXy_pizDc8LYeo0vPMzl_EFpXK1Or1nLrCtvnsbBMtb_kFCV8H6E8w6Z8rM0YeFMthkZadk1lSOLtikdnpMyKV1XttmaZABgYn70BARLoS-A9VKSIxojCx2NJQgdOsneHNOFEeEMDrT6wLvT7DkO3F-JhEmq_oAliqtZ1AStVZBHb5ieapeqXFCsd1HcR0HAMHSmC_6dXhJAYPV3yjDd22yMoW9rSbrsPL9hHgueOo-Kt8YqHXVX_ke3uN56qUPn_cafbTCofoyzxSKN0TRxFQIR1vud1teCnoPM4PmWMIwQte4t0mras6AL_I6SlcBgqK_-f9nwuh15NIPdeYLsBNOb3GRz185oH75kkr1FdG9qdMJyc9FDrFH1thaONrLEYkaF-zGTLBZa_9SfwpAhvYYRRbC0tk71Nun1IRK23_qmGYb-OkH-9mOxYL1uIdNOcZoHcvdF_qG5QFcRqUzGQQcY8JGtJpXN09xv8nTt4_3Sr_tqTya23REuMSrd3fgNCK_U-LxGlV5gPCrnPBNnGnjMGApn3LEak9BXcE1D1mT92g7qfRLJ_U5DPDhmVazkeBK--Qz_KvDd4GLG83oTZlxkIEp0LoHKz-rKQ5Q6st1TetTXYENFbOdh65R8MIWHqz16hds2AvUSzx2b1aJn8iER84gxy43hUaeUZCohyldpnwrHevHXjroiLzitDPDuz_2CurXwQz-eRXUGIf1in0167kJIZ9Tm-ZHdT7BD4_2GsRSzIYdaGYh4BEXBTbw9-Jt0F2aItE3xG7w1UBHl0PDOoKyhU_WXfoJ86z1CeFNQ5LkO2gGU8KEJ9v3ZUAfjbHvmDdLvkO6SYFf2Ro0RzPYvk1FWUAT7LCaarJI1Z0stCTK2OjkiqlOQV-I2ogCKC-NtxVShxzda6mI3RcwcTAi_1Qx85HlBS2JUXkwBE0qWj34iI4ZReNpS9ahEL8hXari44fEfteUA0f2PNbVYXvvxJ'
+
+# Initialize Dropbox client
+dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -36,26 +59,21 @@ def save_user_firebase(email):
     response = requests.post(FIREBASE_URL[:-5] + '.json', json=user_data)
     return response.status_code == 200
 
-def create_box_folder(client, folder_name):
+def get_or_create_dropbox_folder(folder_name):
     try:
-        folder = client.folder('0').create_subfolder(folder_name)
-        print(f"Carpeta '{folder_name}' creada en Box")
-        return folder
-    except Exception as e:
-        print(f"Error creando la carpeta: {e}")
-        return None
-
-def get_or_create_box_folder(client, folder_name):
-    try:
-        items = client.folder('0').get_items()
-        for item in items:
-            if item.name == folder_name and item.type == 'folder':
-                print(f"Carpeta '{folder_name}' ya existe en Box")
-                return item
-        return create_box_folder(client, folder_name)
-    except Exception as e:
-        print(f"Error buscando o creando la carpeta: {e}")
-        return None
+        # Check if the folder exists in Dropbox
+        folder_metadata = dbx.files_get_metadata('/' + folder_name)
+        print(f"Carpeta '{folder_name}' ya existe en Dropbox")
+        return folder_metadata
+    except dropbox.exceptions.ApiError as e:
+        if e.error.is_path() and e.error.get_path().is_conflict():
+            print(f"Error creando la carpeta: {e}")
+            return None
+        else:
+            # Create folder if it doesn't exist
+            dbx.files_create_folder_v2('/' + folder_name)
+            print(f"Carpeta '{folder_name}' creada en Dropbox")
+            return dbx.files_get_metadata('/' + folder_name)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -97,8 +115,6 @@ def register():
 @app.route('/logout')
 def logout():
     session.pop('user', None)
-    session.pop('box_access_token', None)
-    session.pop('box_refresh_token', None)
     return redirect(url_for('login'))
 
 @app.route('/')
@@ -106,39 +122,23 @@ def index():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    box_files = []
-    if 'box_access_token' in session:
-        try:
-            oauth = OAuth2(
-                client_id=CLIENT_ID,
-                client_secret=CLIENT_SECRET,
-                access_token=session['box_access_token'],
-                refresh_token=session['box_refresh_token'],
-                store_tokens=lambda access, refresh: session.update({
-                    'box_access_token': access,
-                    'box_refresh_token': refresh
-                })
-            )
-            client = Client(oauth)
+    dropbox_files = []
+    try:
+        folder_metadata = get_or_create_dropbox_folder("ArchivosSubidos")
+        if folder_metadata:
+            # Get all files in the folder
+            result = dbx.files_list_folder('/ArchivosSubidos')
+            for entry in result.entries:
+                if isinstance(entry, dropbox.files.FileMetadata):
+                    dropbox_files.append({
+                        'title': entry.name,
+                        'file_id': entry.id,
+                        'url': dbx.files_get_temporary_link(entry.id).link
+                    })
+    except AuthError as e:
+        flash(f"Error accediendo a Dropbox: {e}", 'error')
 
-            folder = get_or_create_box_folder(client, "ArchivosSubidos")
-            if folder:
-                items = folder.get_items()
-                for item in items:
-                    if item.type == 'file':
-                        ext = item.name.rsplit('.', 1)[-1].lower()
-                        shared_link = client.file(item.id).get_shared_link(access='open')
-                        embed_url = f"https://app.box.com/embed/s/{shared_link.split('/')[-1]}"
-                        box_files.append({
-                            'title': item.name,
-                            'extension': ext,
-                            'file_id': item.id,
-                            'embed_url': embed_url
-                        })
-        except Exception as e:
-            flash(f"Error accediendo a Box: {e}", 'error')
-
-    return render_template('index.html', box_files=box_files)
+    return render_template('index.html', dropbox_files=dropbox_files)
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -156,69 +156,31 @@ def upload():
         file.save(filepath)
         flash('Archivo subido localmente', 'success')
 
-        if 'box_access_token' in session:
-            try:
-                oauth = OAuth2(
-                    client_id=CLIENT_ID,
-                    client_secret=CLIENT_SECRET,
-                    access_token=session['box_access_token'],
-                    refresh_token=session['box_refresh_token'],
-                    store_tokens=lambda access, refresh: session.update({
-                        'box_access_token': access,
-                        'box_refresh_token': refresh
-                    })
-                )
-                client = Client(oauth)
-
-                folder = get_or_create_box_folder(client, "ArchivosSubidos")
-                if folder:
-                    with open(filepath, 'rb') as f:
-                        uploaded_item = folder.upload_stream(f, filename)
-                        print(f"Archivo subido a Box: {uploaded_item.name}")
-                    os.remove(filepath)
-                    flash('Archivo también subido a Box', 'success')
-            except Exception as e:
-                flash(f'Error subiendo a Box: {e}', 'error')
+        try:
+            # Upload to Dropbox
+            with open(filepath, 'rb') as f:
+                file_path = '/ArchivosSubidos/' + filename
+                dbx.files_upload(f.read(), file_path, mute=True)
+                print(f"Archivo subido a Dropbox: {filename}")
+            os.remove(filepath)
+            flash('Archivo también subido a Dropbox', 'success')
+        except Exception as e:
+            flash(f'Error subiendo a Dropbox: {e}', 'error')
 
     return redirect(url_for('index'))
 
-@app.route('/callback')
-def callback():
-    code = request.args.get('code')
-    if not code:
-        return 'No se recibió ningún código de Box.', 400
-
-    try:
-        access_token, refresh_token = box_oauth.authenticate(code)
-        session['box_access_token'] = access_token
-        session['box_refresh_token'] = refresh_token
-        flash('Conectado con Box correctamente.', 'success')
-        return redirect(url_for('index'))
-    except Exception as e:
-        return f"Error al intercambiar el código por tokens: {e}", 500
-
 @app.route('/preview/<file_id>')
 def preview(file_id):
-    access_token = session.get('box_access_token')
-    if not access_token:
-        return "Acceso no autorizado", 403
+    try:
+        # Get the temporary link for the file to preview it
+        link = dbx.files_get_temporary_link(file_id).link
+        return redirect(link)
+    except Exception as e:
+        return f"Error al obtener el archivo: {e}", 400
 
-    url = f'https://api.box.com/2.0/files/{file_id}/content'
-    headers = {'Authorization': f'Bearer {access_token}'}
-    response = requests.get(url, headers=headers, stream=True)
-
-    if response.status_code == 200:
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk:
-                temp_file.write(chunk)
-        temp_file.close()
-        return send_file(temp_file.name, as_attachment=False)
-    else:
-        return "Error al obtener el archivo", 400
-        
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
+
 
