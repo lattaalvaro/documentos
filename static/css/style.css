@@ -6,9 +6,26 @@
     font-family: Arial, sans-serif;
 }
 
-body {
-    background-color: #708238; /* Verde muy claro para el fondo del body */
+html, body {
+    background-color: #708238; /* Verde militar para el body */
     color: #333;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden; /* Evitar scroll horizontal en toda la página */
+    margin: 0;
+    padding: 0;
+}
+
+/* Corregir el problema del color en la parte superior del móvil */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: env(safe-area-inset-top, 0px); /* Para dispositivos con notch */
+    background-color: #4B5320; /* Mismo color que el header */
+    z-index: 1000;
 }
 
 /* Encabezado - Centrado */
@@ -20,6 +37,9 @@ header {
     align-items: center;
     justify-content: center; /* Centrado */
     text-align: center;
+    position: relative;
+    z-index: 10;
+    width: 100%;
 }
 
 .logo {
@@ -33,13 +53,23 @@ header h1 {
     letter-spacing: 1px;
 }
 
+/* Contenedor principal para controlar flujo */
+.content-wrapper {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
 /* Contenedor de información de usuario - Con bordes redondeados */
 .user-container {
     background-color: rgba(216, 225, 195, 0.7); /* Verde claro semi-transparente */
     border-radius: 8px;
-    margin: 1rem;
+    margin: 1rem auto;
     padding: 0.8rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Información de usuario - Redondeado y con ícono */
@@ -62,6 +92,9 @@ header h1 {
     margin-right: 8px;
     font-size: 0.9rem;
     color: #4B5320; /* Verde militar para el texto */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px; /* Limitar ancho para evitar desbordamiento */
 }
 
 .btn-logout {
@@ -76,6 +109,7 @@ header h1 {
     text-decoration: none;
     font-size: 1rem;
     transition: background-color 0.3s;
+    flex-shrink: 0; /* Evitar que se comprima */
 }
 
 .btn-logout:hover {
@@ -124,14 +158,17 @@ header h1 {
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.7); /* Blanco semi-transparente */
     border-radius: 8px;
-    margin: 1rem;
+    margin: 1rem auto;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Formulario de carga */
 .upload-form {
     display: flex;
     align-items: center;
+    flex: 1;
 }
 
 #fileInput {
@@ -173,22 +210,30 @@ header h1 {
 .search-container {
     display: flex;
     align-items: center;
+    flex: 1;
+}
+
+.search-box {
+    width: 100%;
 }
 
 .search-box input {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    width: 250px;
+    width: 100%;
+    max-width: 250px;
 }
 
 /* Sección de documentos recientes - Semi-transparente */
 .recent-docs {
     background-color: rgba(232, 236, 214, 0.8); /* Verde claro semi-transparente */
     border-radius: 8px;
-    margin: 1rem;
+    margin: 1rem auto;
     padding: 1.5rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .recent-docs h2 {
@@ -201,11 +246,15 @@ header h1 {
 }
 
 /* Lista de documentos - Rectangulares verticales */
+.doc-list-wrapper {
+    overflow: visible; /* Por defecto visible para PC */
+}
+
 .doc-list {
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* 5 documentos por fila en PC */
     gap: 1rem;
-    max-width: 1400px;
+    max-width: 100%;
     margin: 0 auto;
 }
 
@@ -372,20 +421,32 @@ header h1 {
     .doc-list {
         grid-template-columns: repeat(3, 1fr); /* 3 documentos en pantallas más pequeñas */
     }
+    
+    .search-box input {
+        max-width: 200px;
+    }
 }
 
 @media (max-width: 768px) {
+    /* Ajustes generales para móvil */
+    .content-wrapper {
+        padding: 0;
+    }
+    
     /* Cambios en el encabezado para móvil */
     header {
         padding: 0.8rem;
+        width: 100vw; /* Asegurar que ocupe todo el ancho */
     }
     
     .logo {
-        width: 50px;
+        width: 40px;
+        margin-right: 10px;
     }
     
     header h1 {
-        font-size: 1.4rem;
+        font-size: clamp(1rem, 3.5vw, 1.4rem); /* Tamaño adaptable */
+        line-height: 1.2;
     }
     
     /* Reorganización de contenedores para móvil */
@@ -397,14 +458,22 @@ header h1 {
     /* Mover el contenedor de usuario debajo de documentos recientes */
     .user-container {
         order: 2;
+        width: calc(100% - 2rem);
+        margin: 1rem;
     }
     
     .recent-docs {
         order: 1;
+        width: calc(100% - 2rem);
+        margin: 1rem;
+        padding: 1rem;
     }
     
     .upload-search-container {
         order: 0;
+        width: calc(100% - 2rem);
+        margin: 1rem;
+        padding: 0.8rem;
     }
     
     /* Crear scroll horizontal para documentos en móvil */
@@ -412,6 +481,7 @@ header h1 {
         overflow-x: auto;
         padding-bottom: 1rem; /* Espacio para la barra de scroll */
         margin-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
     }
     
     .doc-list {
@@ -423,7 +493,7 @@ header h1 {
     }
     
     .doc-card {
-        width: 150px; /* Ancho fijo para cada tarjeta */
+        width: 140px; /* Ancho fijo para cada tarjeta - adaptable a móvil */
         flex-shrink: 0; /* Evitar que se compriman */
         height: 200px; /* Un poco más compacto en móvil */
     }
@@ -435,9 +505,8 @@ header h1 {
     /* Cambios en la barra de carga/búsqueda */
     .upload-search-container {
         flex-direction: row; /* Mantener horizontal */
-        align-items: center;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: space-between;
         gap: 10px;
     }
     
@@ -446,14 +515,8 @@ header h1 {
         display: none;
     }
     
-    /* Hacer que al seleccionar un archivo se suba automáticamente */
-    #fileInput:not(:placeholder-shown) ~ .auto-submit-wrapper {
-        display: block;
-    }
-    
     .upload-form, .search-container {
-        flex: 1;
-        min-width: 120px;
+        flex: 0 0 48%; /* Dos elementos por fila */
     }
     
     /* Igualar tamaños del botón y buscador */
@@ -470,7 +533,17 @@ header h1 {
     
     .search-box input {
         width: 100%;
+        max-width: none;
         padding: 8px;
+    }
+    
+    /* Para asegurar que el correo no desborde */
+    .user-email {
+        max-width: 100%;
+    }
+    
+    .user-email-text {
+        max-width: calc(100% - 40px);
     }
     
     /* Ajustes para el modal en móvil */
@@ -496,40 +569,50 @@ header h1 {
     }
 }
 
-@media (max-width: 480px) {
+/* Para pantallas muy pequeñas */
+@media (max-width: 360px) {
     header {
         padding: 0.6rem;
     }
     
     .logo {
-        width: 40px;
-        margin-right: 10px;
+        width: 30px;
+        margin-right: 8px;
     }
     
     header h1 {
-        font-size: 1.1rem;
+        font-size: 0.9rem;
+    }
+    
+    .recent-docs h2 {
+        font-size: 1.2rem;
+    }
+    
+    .doc-card {
+        width: 120px;
+        height: 180px;
     }
     
     .btn {
         padding: 5px 8px;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
     
     .user-email {
-        padding: 4px 10px;
+        padding: 3px 8px;
     }
     
     .user-email-text {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
     
     .btn-logout {
-        width: 25px;
-        height: 25px;
+        width: 22px;
+        height: 22px;
     }
     
     .logout-icon {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
     }
 }
