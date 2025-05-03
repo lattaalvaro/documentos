@@ -210,17 +210,14 @@ def upload():
 def preview(file_id):
     if 'user' not in session:
         return redirect(url_for('login'))
-
+        
     dbx = get_dropbox_client()
     if not dbx:
         flash('Error conectando con Dropbox', 'error')
         return redirect(url_for('index'))
-
+        
     try:
-        # Asegurar que la ruta comience con "/"
-        if not file_id.startswith('/'):
-            file_id = '/' + file_id
-
+        # Obtener el enlace temporal para previsualización
         temp_link = dbx.files_get_temporary_link(file_id)
         return redirect(temp_link.link)
     except Exception as e:
