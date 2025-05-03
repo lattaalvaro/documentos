@@ -7,7 +7,7 @@
 }
 
 body {
-    background-color: #EEF1E6; /* Verde muy claro para el fondo del body */
+    background-color: #708238; /* Verde muy claro para el fondo del body */
     color: #333;
 }
 
@@ -33,7 +33,7 @@ header h1 {
     letter-spacing: 1px;
 }
 
-/* Información de usuario */
+/* Información de usuario - Redondeado y con ícono */
 .user-info {
     display: flex;
     justify-content: flex-end;
@@ -42,18 +42,42 @@ header h1 {
     padding: 0.5rem 1rem;
 }
 
+.user-email {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 5px 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.user-email-text {
+    margin-right: 8px;
+    font-size: 0.9rem;
+    color: #4B5320; /* Verde militar para el texto */
+}
+
 .btn-logout {
     background-color: #556B2F; /* Verde militar más oscuro */
     color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
-    font-size: 0.8rem;
-    margin-left: 10px;
+    font-size: 1rem;
+    transition: background-color 0.3s;
 }
 
 .btn-logout:hover {
     background-color: #3A4A1F; /* Verde militar aún más oscuro */
+}
+
+.logout-icon {
+    width: 16px;
+    height: 16px;
 }
 
 /* Mensajes flash */
@@ -446,5 +470,23 @@ header h1 {
     .btn {
         padding: 5px 8px;
         font-size: 0.8rem;
+    }
+    
+    .user-email {
+        padding: 4px 10px;
+    }
+    
+    .user-email-text {
+        font-size: 0.8rem;
+    }
+    
+    .btn-logout {
+        width: 25px;
+        height: 25px;
+    }
+    
+    .logout-icon {
+        width: 14px;
+        height: 14px;
     }
 }
