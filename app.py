@@ -175,4 +175,16 @@ def upload():
                     
                     flash('Archivo subido correctamente a Dropbox', 'success')
                 else:
-                    flash('No se pudo crear la carpeta
+                    flash('No se pudo crear la carpeta en Dropbox', 'error')
+            except Exception as e:
+                flash(f'Error al subir el archivo a Dropbox: {e}', 'error')
+        else:
+            flash('No se pudo conectar a Dropbox', 'error')
+        
+        return redirect(url_for('index'))
+    else:
+        flash('Tipo de archivo no permitido', 'error')
+        return redirect(url_for('index'))
+
+if __name__ == "__main__":
+    app.run(debug=True)
