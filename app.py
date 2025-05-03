@@ -186,5 +186,14 @@ def upload():
         flash('Tipo de archivo no permitido', 'error')
         return redirect(url_for('index'))
 
+@app.route('/preview/<file_id>')
+def preview(file_id):
+    # Aquí puedes obtener el documento según el file_id
+    doc = next((doc for doc in dropbox_files if doc['file_id'] == file_id), None)
+    if doc is None:
+        flash('Documento no encontrado', 'error')
+        return redirect(url_for('index'))
+    return render_template('index.html', doc=doc)
+
 if __name__ == "__main__":
     app.run(debug=True)
