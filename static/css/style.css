@@ -616,3 +616,45 @@ header h1 {
         height: 12px;
     }
 }
+
+/* Añadir estas reglas al CSS existente */
+
+body {
+    padding-bottom: 2rem; /* Añadir espacio al final de la página */
+    min-height: 100vh; /* Asegurar que ocupe al menos toda la altura visible */
+}
+
+.content-wrapper {
+    min-height: calc(100vh - 80px); /* Altura mínima para cubrir toda la pantalla menos el header */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Hacer que el último contenedor se expanda para llenar el espacio restante en móvil */
+@media (max-width: 768px) {
+    .content-wrapper {
+        min-height: calc(100vh - 70px); /* Ajustado para header más pequeño en móvil */
+    }
+    
+    .user-container {
+        margin-bottom: 2rem; /* Asegurar margen inferior suficiente */
+    }
+    
+    /* Para dispositivos Android */
+    @supports (-webkit-appearance:none) {
+        body {
+            padding-bottom: 3rem; /* Más padding para Android */
+        }
+        
+        .user-container {
+            margin-bottom: 2.5rem; /* Más margen para Android */
+        }
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 360px) {
+    .content-wrapper {
+        min-height: calc(100vh - 60px); /* Ajustado para header aún más pequeño */
+    }
+}
