@@ -14,6 +14,8 @@ html, body {
     overflow-x: hidden; /* Evitar scroll horizontal en toda la página */
     margin: 0;
     padding: 0;
+    padding-bottom: 2rem; /* Añadir espacio al final de la página */
+    min-height: 100vh; /* Asegurar que ocupe al menos toda la altura visible */
 }
 
 /* Corregir el problema del color en la parte superior del móvil */
@@ -59,6 +61,9 @@ header h1 {
     margin: 0 auto;
     padding: 0 1rem;
     box-sizing: border-box;
+    min-height: calc(100vh - 80px); /* Altura mínima para cubrir toda la pantalla menos el header */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Contenedor de información de usuario - Con bordes redondeados */
@@ -68,7 +73,7 @@ header h1 {
     margin: 1rem auto;
     padding: 0.8rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    max-width: 100%;
+    width: calc(100% - 2rem); /* Ancho fijo igual que los otros contenedores */
     box-sizing: border-box;
 }
 
@@ -77,6 +82,7 @@ header h1 {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    width: 100%; /* Ocupar todo el ancho del contenedor */
 }
 
 .user-email {
@@ -86,6 +92,7 @@ header h1 {
     border-radius: 20px;
     padding: 5px 15px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-width: 100%; /* Limitar al ancho del contenedor */
 }
 
 .user-email-text {
@@ -94,7 +101,7 @@ header h1 {
     color: #4B5320; /* Verde militar para el texto */
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px; /* Limitar ancho para evitar desbordamiento */
+    max-width: calc(100% - 40px); /* Evitar que se desborde */
 }
 
 .btn-logout {
@@ -160,7 +167,7 @@ header h1 {
     border-radius: 8px;
     margin: 1rem auto;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    max-width: 100%;
+    width: calc(100% - 2rem); /* Ancho fijo igual a los otros contenedores */
     box-sizing: border-box;
 }
 
@@ -232,7 +239,7 @@ header h1 {
     margin: 1rem auto;
     padding: 1.5rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    max-width: 100%;
+    width: calc(100% - 2rem); /* Ancho fijo igual a los otros contenedores */
     box-sizing: border-box;
 }
 
@@ -431,12 +438,13 @@ header h1 {
     /* Ajustes generales para móvil */
     .content-wrapper {
         padding: 0;
+        min-height: calc(100vh - 70px); /* Ajustado para header más pequeño en móvil */
     }
     
     /* Cambios en el encabezado para móvil */
     header {
         padding: 0.8rem;
-        width: 100vw; /* Asegurar que ocupe todo el ancho */
+        width: 100%;
     }
     
     .logo {
@@ -460,6 +468,7 @@ header h1 {
         order: 2;
         width: calc(100% - 2rem);
         margin: 1rem;
+        margin-bottom: 2rem; /* Asegurar margen inferior suficiente */
     }
     
     .recent-docs {
@@ -567,10 +576,25 @@ header h1 {
         right: 10px;
         font-size: 24px;
     }
+    
+    /* Para dispositivos Android */
+    @supports (-webkit-appearance:none) {
+        body {
+            padding-bottom: 3rem; /* Más padding para Android */
+        }
+        
+        .user-container {
+            margin-bottom: 2.5rem; /* Más margen para Android */
+        }
+    }
 }
 
 /* Para pantallas muy pequeñas */
 @media (max-width: 360px) {
+    .content-wrapper {
+        min-height: calc(100vh - 60px); /* Ajustado para header aún más pequeño */
+    }
+    
     header {
         padding: 0.6rem;
     }
@@ -614,47 +638,5 @@ header h1 {
     .logout-icon {
         width: 12px;
         height: 12px;
-    }
-}
-
-/* Añadir estas reglas al CSS existente */
-
-body {
-    padding-bottom: 2rem; /* Añadir espacio al final de la página */
-    min-height: 100vh; /* Asegurar que ocupe al menos toda la altura visible */
-}
-
-.content-wrapper {
-    min-height: calc(100vh - 80px); /* Altura mínima para cubrir toda la pantalla menos el header */
-    display: flex;
-    flex-direction: column;
-}
-
-/* Hacer que el último contenedor se expanda para llenar el espacio restante en móvil */
-@media (max-width: 768px) {
-    .content-wrapper {
-        min-height: calc(100vh - 70px); /* Ajustado para header más pequeño en móvil */
-    }
-    
-    .user-container {
-        margin-bottom: 2rem; /* Asegurar margen inferior suficiente */
-    }
-    
-    /* Para dispositivos Android */
-    @supports (-webkit-appearance:none) {
-        body {
-            padding-bottom: 3rem; /* Más padding para Android */
-        }
-        
-        .user-container {
-            margin-bottom: 2.5rem; /* Más margen para Android */
-        }
-    }
-}
-
-/* Para pantallas muy pequeñas */
-@media (max-width: 360px) {
-    .content-wrapper {
-        min-height: calc(100vh - 60px); /* Ajustado para header aún más pequeño */
     }
 }
